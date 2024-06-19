@@ -165,6 +165,35 @@ export class Json<T> implements Limo<T> {
   }
 }
 
+/**
+ * Read and automatically write JSONC files.
+ * JSONC is a JSON with comments.
+ * You can pass a validator
+ * function to validate the data.
+ *
+ * @example
+ * ```ts
+ * // without validator
+ * import { Jsonc } from "@ryoppippi/limo";
+ * {
+ *   using jsonc = new Jsonc("file.jsonc");
+ *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { Jsonc } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using jsonc = new Jsonc("file.jsonc", { validator });
+ *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ */
 export class Jsonc<T> implements Limo<T> {
   #data: T | undefined;
   #old_data: T | undefined;
