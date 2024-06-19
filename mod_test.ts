@@ -6,8 +6,9 @@ import { join } from "node:path";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_toml from "@std/toml";
+import * as std_yaml from "@std/yaml";
 
-import { Json, Jsonc, Text, Toml } from "./mod.ts";
+import { Json, Jsonc, Text, Toml, Yaml } from "./mod.ts";
 
 function prepareTmpdir() {
   const randomStr = Math.random().toString(36).substring(7);
@@ -189,4 +190,55 @@ path = "cli/main.rs"
   const data = readFileSync(filepath, "utf-8");
   const tomlData = std_toml.parse(data);
   assertEquals(tomlData, { bin: [{ name: "deno", path: "cli/main.rs" }] });
+});
+
+test("Yaml", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.yaml");
+  {
+    using yaml = new Yaml(filepath);
+    yaml.data = { hello: "world" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, "hello: world\n");
+});
+
+test("Yaml with validator", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.yaml");
+
+  function validator(data: unknown): data is { hello: string } {
+    return typeof data === "object" && data != null && "hello" in data;
+  }
+  {
+    using yaml = new Yaml(filepath, { validator });
+    yaml.data = { hello: "world" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, "hello: world\n");
+});
+
+test("Yaml with prepared file and without validator", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.yaml");
+  const dummyYaml = `
+foo: bar
+baz:
+  - qux
+  - quux
+`;
+
+  writeFileSync(filepath, dummyYaml);
+
+  {
+    using yaml = new Yaml<{ foo: string; baz: string[] }>(filepath);
+    assertEquals(yaml.data, { foo: "bar", baz: ["qux", "quux"] });
+    yaml.data?.baz.push("corge");
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  const yamlData = std_yaml.parse(data);
+  assertEquals(yamlData, { foo: "bar", baz: ["qux", "quux", "corge"] });
 });
