@@ -17,8 +17,10 @@
   },
   "imports": {
     "@cross/test": "jsr:@cross/test@^0.0.9",
+    "@ryoppippi/limo": "./mod.ts",
     "@std/assert": "jsr:@std/assert@^0.226.0",
-    "@ryoppippi/limo": "./mod.ts"
+    "@std/jsonc": "jsr:@std/jsonc@^0.224.2",
+    "jsonc-parser": "npm:jsonc-parser@^3.2.1"
   },
   "exports": "./mod.ts",
   "publish": {
