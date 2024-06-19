@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
+import * as std_toml from "@std/toml";
 
 type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
@@ -269,5 +270,82 @@ export class Jsonc<T> implements Limo<T> {
       jsonc_parser.format(newText, undefined, {}),
     );
     writeFileSync(this.#path, formatted);
+  }
+}
+
+/**
+ * Read and automatically write TOML files.
+ * You can pass a validator function to validate the data.
+ * @example
+ * ```ts
+ * // without validator
+ * import { Toml } from "@ryoppippi/limo";
+ * {
+ *   using toml = new Toml("file.toml");
+ *   toml.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { Toml } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using toml = new Toml("file.toml", { validator });
+ *   toml.data = { hello: "world" };
+ * }
+ * ```
+ */
+export class Toml<T> implements Limo<T> {
+  #data: T | undefined;
+  #path: string;
+  #options: ResolvedOptions<T>;
+
+  constructor(
+    path: string,
+    options: Options<T> = {},
+  ) {
+    this.#options = resolveOptions(options);
+    this.#path = path;
+    this.#data = this._read();
+  }
+
+  [Symbol.dispose]() {
+    this._write();
+  }
+
+  get data(): T | undefined {
+    return this.#data;
+  }
+
+  set data(value: T) {
+    this.#data = value;
+  }
+
+  private _read() {
+    if (existsSync(this.#path)) {
+      const text = readFileSync(this.#path, { encoding: "utf8" });
+      const toml = std_toml.parse(text);
+      const { validator } = this.#options;
+      if (validator != null && !validator(toml)) {
+        throw new Error(`Invalid data: ${text}`);
+      }
+      return toml as T;
+    }
+    if (!this.#options.allowNoExist) {
+      throw new Error(`File not found: ${this.#path}`);
+    }
+    return undefined;
+  }
+
+  private _write() {
+    if (this.#data == null) {
+      return;
+    }
+
+    writeFileSync(this.#path, std_toml.stringify(this.#data));
   }
 }
