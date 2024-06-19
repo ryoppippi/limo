@@ -57,6 +57,33 @@ export class Text implements Limo<string> {
   }
 }
 
+/**
+ * Read and automatically write JSON files.
+ * You can pass a validator function to validate the data.
+ * @example
+ * ```ts
+ * // without validator
+ * import { Json } from "@ryoppippi/limo";
+ * {
+ *   using json = new Json("file.json");
+ *   json.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { Json } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using json = new Json("file.json", validator);
+ *   json.data = { hello: "world" };
+ * }
+ * ```
+ */
+
 export class Json<T> implements Limo<T> {
   #data: T | undefined;
   #path: string;
