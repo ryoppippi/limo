@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
+type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
   [Symbol.dispose](): void;
 
@@ -90,14 +91,10 @@ export class Json<T> implements Limo<T> {
 
   constructor(
     path: string,
-    validator?: (value: unknown) => value is T,
+    validator?: Validator<T>,
   ) {
     this.#path = path;
-    const data = this._read();
-
-    if (data != null && validator != null && validator(data)) {
-      this.#data = data;
-    }
+    this.#data = this._read(validator);
   }
 
   [Symbol.dispose]() {
@@ -112,9 +109,14 @@ export class Json<T> implements Limo<T> {
     this.#data = value;
   }
 
-  private _read() {
+  private _read(validator?: Validator<T>) {
     if (existsSync(this.#path)) {
-      return JSON.parse(readFileSync(this.#path, { encoding: "utf8" }));
+      const text = readFileSync(this.#path, { encoding: "utf8" });
+      const json = JSON.parse(text) as unknown;
+      if (validator == null || !validator(json)) {
+        throw new Error(`Invalid data: ${text}`);
+      }
+      return json;
     }
     return undefined;
   }
