@@ -5,9 +5,11 @@
       "jsr:@cross/runtime@^1.0.0": "jsr:@cross/runtime@1.0.0",
       "jsr:@cross/test@^0.0.9": "jsr:@cross/test@0.0.9",
       "jsr:@std/assert@^0.226.0": "jsr:@std/assert@0.226.0",
+      "jsr:@std/collections@^1.0.0-rc.1": "jsr:@std/collections@1.0.0-rc.1",
       "jsr:@std/internal@^1.0.0": "jsr:@std/internal@1.0.0",
       "jsr:@std/json@^0.224.1": "jsr:@std/json@0.224.1",
       "jsr:@std/jsonc@^0.224.2": "jsr:@std/jsonc@0.224.2",
+      "jsr:@std/toml@^0.224.1": "jsr:@std/toml@0.224.1",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:cronstrue": "npm:cronstrue@2.50.0",
       "npm:jsonc-parser@^3.2.1": "npm:jsonc-parser@3.2.1"
@@ -28,6 +30,9 @@
           "jsr:@std/internal@^1.0.0"
         ]
       },
+      "@std/collections@1.0.0-rc.1": {
+        "integrity": "e69fa667e4bede8f1013be9fb48915e564707a2b054848ca4a4da1f3f10251d9"
+      },
       "@std/internal@1.0.0": {
         "integrity": "ac6a6dfebf838582c4b4f61a6907374e27e05bedb6ce276e0f1608fe84e7cd9a"
       },
@@ -38,6 +43,12 @@
         "integrity": "b7344f8c5ea95394a8421c6060324717c6922661ca26a9f9d0ac5803689739ab",
         "dependencies": [
           "jsr:@std/json@^0.224.1"
+        ]
+      },
+      "@std/toml@0.224.1": {
+        "integrity": "c364b9ca3b18207223c4e2a1f652ef2970ff80967f7575ddf89b6b0565a17148",
+        "dependencies": [
+          "jsr:@std/collections@^1.0.0-rc.1"
         ]
       }
     },
@@ -62,6 +73,7 @@
       "jsr:@cross/test@^0.0.9",
       "jsr:@std/assert@^0.226.0",
       "jsr:@std/jsonc@^0.224.2",
+      "jsr:@std/toml@^0.224.1",
       "npm:jsonc-parser@^3.2.1"
     ]
   }

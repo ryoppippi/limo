@@ -5,8 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
+import * as std_toml from "@std/toml";
 
-import { Json, Jsonc, Text } from "./mod.ts";
+import { Json, Jsonc, Text, Toml } from "./mod.ts";
 
 function prepareTmpdir() {
   const randomStr = Math.random().toString(36).substring(7);
@@ -138,4 +139,54 @@ test("Jsonc with prepared file and valid data and validator", () => {
 
   const jsonc = jsonc_parser.parse(data);
   assertEquals(jsonc, { foo: "bar" });
+});
+
+test("Toml", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.toml");
+  {
+    using toml = new Toml(filepath);
+    toml.data = { hello: "world" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, 'hello = "world"\n');
+});
+
+test("Toml with validator", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.toml");
+
+  function validator(data: unknown): data is { hello: string } {
+    return typeof data === "object" && data != null && "hello" in data;
+  }
+  {
+    using toml = new Toml(filepath, { validator });
+    toml.data = { hello: "world" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, 'hello = "world"\n');
+});
+
+test("Toml with prepared file and without validator", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.toml");
+  const dummyToml = `
+[[bin]]
+name = "deno"
+path = "cli/main.rs"
+`;
+
+  writeFileSync(filepath, dummyToml);
+
+  {
+    using toml = new Toml(filepath);
+
+    assertEquals(toml.data, { bin: [{ name: "deno", path: "cli/main.rs" }] });
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  const tomlData = std_toml.parse(data);
+  assertEquals(tomlData, { bin: [{ name: "deno", path: "cli/main.rs" }] });
 });
