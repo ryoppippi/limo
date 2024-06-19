@@ -1,5 +1,5 @@
 {
-  "name": "@ryoppippi/",
+  "name": "@ryoppippi/limo",
   "version": "0.0.0",
   "tasks": {
     "dev": "deno run --watch mod.ts",
@@ -17,7 +17,8 @@
   },
   "imports": {
     "@cross/test": "jsr:@cross/test@^0.0.9",
-    "@std/assert": "jsr:@std/assert@^0.226.0"
+    "@std/assert": "jsr:@std/assert@^0.226.0",
+    "@ryoppippi/limo": "./mod.ts"
   },
   "exports": "./mod.ts",
   "publish": {
