@@ -56,3 +56,47 @@ export class Text implements Limo<string> {
     writeFileSync(this.#path, this.#data);
   }
 }
+
+export class Json<T> implements Limo<T> {
+  #data: T | undefined;
+  #path: string;
+
+  constructor(
+    path: string,
+    validator?: (value: unknown) => value is T,
+  ) {
+    this.#path = path;
+    const data = this._read();
+
+    if (data != null && validator != null && validator(data)) {
+      this.#data = data;
+    }
+  }
+
+  [Symbol.dispose]() {
+    this._write();
+  }
+
+  get data(): T | undefined {
+    return this.#data;
+  }
+
+  set data(value: T) {
+    this.#data = value;
+  }
+
+  private _read() {
+    if (existsSync(this.#path)) {
+      return JSON.parse(readFileSync(this.#path, { encoding: "utf8" }));
+    }
+    return undefined;
+  }
+
+  private _write() {
+    if (this.#data == null) {
+      return;
+    }
+
+    writeFileSync(this.#path, JSON.stringify(this.#data, null, 2));
+  }
+}
