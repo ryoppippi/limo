@@ -48,7 +48,7 @@ test("Json with validator", () => {
     return typeof data === "object" && data != null && "hello" in data;
   }
   {
-    using json = new Json(filepath, validator);
+    using json = new Json(filepath, { validator });
     json.data = { hello: "world" };
   }
 
@@ -92,7 +92,7 @@ test("Jsonc with validator", () => {
     return typeof data === "object" && data != null && "hello" in data;
   }
   {
-    using json = new Jsonc(filepath, validator);
+    using json = new Jsonc(filepath, { validator });
     json.data = { hello: "world" };
   }
 
@@ -112,7 +112,7 @@ test("Jsonc with invalid data and validator", () => {
   writeFileSync(filepath, '{"foo": "bar"}');
 
   assertThrows(() => {
-    using json = new Jsonc(filepath, validator);
+    using json = new Jsonc(filepath, { validator });
     assertEquals(json.data, { hello: "world" });
   });
 });
@@ -129,7 +129,7 @@ test("Jsonc with prepared file and valid data and validator", () => {
   }
 
   {
-    using json = new Jsonc(filepath, validator);
+    using json = new Jsonc(filepath, { validator });
     assertEquals(json.data, { hello: "world" });
     json.data = { foo: "bar" };
   }
