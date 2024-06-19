@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_toml from "@std/toml";
+import * as std_yaml from "@std/yaml";
 
 type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
@@ -347,5 +348,82 @@ export class Toml<T> implements Limo<T> {
     }
 
     writeFileSync(this.#path, std_toml.stringify(this.#data));
+  }
+}
+
+/**
+ * Read and automatically write YAML files.
+ * You can pass a validator function to validate the data.
+ * @example
+ * ```ts
+ * // without validator
+ * import { Yaml } from "@ryoppippi/limo";
+ * {
+ *   using yaml = new Yaml("file.yaml");
+ *   yaml.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { Yaml } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using yaml = new Yaml("file.yaml", { validator });
+ *   yaml.data = { hello: "world" };
+ * }
+ * ```
+ */
+export class Yaml<T> implements Limo<T> {
+  #data: T | undefined;
+  #path: string;
+  #options: ResolvedOptions<T>;
+
+  constructor(
+    path: string,
+    options: Options<T> = {},
+  ) {
+    this.#options = resolveOptions(options);
+    this.#path = path;
+    this.#data = this._read();
+  }
+
+  [Symbol.dispose]() {
+    this._write();
+  }
+
+  get data(): T | undefined {
+    return this.#data;
+  }
+
+  set data(value: T) {
+    this.#data = value;
+  }
+
+  private _read() {
+    if (existsSync(this.#path)) {
+      const text = readFileSync(this.#path, { encoding: "utf8" });
+      const yaml = std_yaml.parse(text);
+      const { validator } = this.#options;
+      if (validator != null && !validator(yaml)) {
+        throw new Error(`Invalid data: ${text}`);
+      }
+      return yaml as T;
+    }
+    if (!this.#options.allowNoExist) {
+      throw new Error(`File not found: ${this.#path}`);
+    }
+    return undefined;
+  }
+
+  private _write() {
+    if (this.#data == null) {
+      return;
+    }
+
+    writeFileSync(this.#path, std_yaml.stringify(this.#data));
   }
 }
