@@ -9,6 +9,24 @@ interface Limo<T> {
   set data(value: T);
 }
 
+interface Options<T> {
+  validator?: Validator<T>;
+  allowNoExist?: boolean;
+}
+
+type ResolvedOptions<T> =
+  & Required<Omit<Options<T>, "validator">>
+  & Pick<Options<T>, "validator">;
+
+function resolveOptions<T>(
+  options: Options<T>,
+): ResolvedOptions<T> {
+  return {
+    validator: options.validator,
+    allowNoExist: options.allowNoExist ?? true,
+  };
+}
+
 /**
  * Text
  *
@@ -25,8 +43,10 @@ interface Limo<T> {
 export class Text implements Limo<string> {
   #data: string | undefined;
   #path: string;
+  #options: ResolvedOptions<string>;
 
-  constructor(path: string) {
+  constructor(path: string, options: Options<string> = {}) {
+    this.#options = resolveOptions(options);
     this.#path = path;
     this.#data = this._read();
   }
@@ -45,7 +65,15 @@ export class Text implements Limo<string> {
 
   private _read() {
     if (existsSync(this.#path)) {
-      return readFileSync(this.#path, { encoding: "utf8" });
+      const data = readFileSync(this.#path, { encoding: "utf8" });
+      const { validator } = this.#options;
+      if (validator != null && !validator(data)) {
+        throw new Error(`Invalid data: ${data}`);
+      }
+      return data;
+    }
+    if (!this.#options.allowNoExist) {
+      throw new Error(`File not found: ${this.#path}`);
     }
     return undefined;
   }
@@ -80,7 +108,7 @@ export class Text implements Limo<string> {
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using json = new Json("file.json", validator);
+ *   using json = new Json("file.json", { validator });
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -89,13 +117,15 @@ export class Text implements Limo<string> {
 export class Json<T> implements Limo<T> {
   #data: T | undefined;
   #path: string;
+  #options: ResolvedOptions<T>;
 
   constructor(
     path: string,
-    validator?: Validator<T>,
+    options: Options<T> = {},
   ) {
+    this.#options = resolveOptions(options);
     this.#path = path;
-    this.#data = this._read(validator);
+    this.#data = this._read();
   }
 
   [Symbol.dispose]() {
@@ -110,14 +140,18 @@ export class Json<T> implements Limo<T> {
     this.#data = value;
   }
 
-  private _read(validator?: Validator<T>) {
+  private _read() {
     if (existsSync(this.#path)) {
       const text = readFileSync(this.#path, { encoding: "utf8" });
       const json = JSON.parse(text) as unknown;
+      const { validator } = this.#options;
       if (validator != null && !validator(json)) {
         throw new Error(`Invalid data: ${text}`);
       }
       return json as T;
+    }
+    if (!this.#options.allowNoExist) {
+      throw new Error(`File not found: ${this.#path}`);
     }
     return undefined;
   }
@@ -136,13 +170,15 @@ export class Jsonc<T> implements Limo<T> {
   #old_data: T | undefined;
   #path: string;
   #text: string | undefined;
+  #options: ResolvedOptions<T>;
 
   constructor(
     path: string,
-    validator?: Validator<T>,
+    options: Options<T> = {},
   ) {
+    this.#options = resolveOptions(options);
     this.#path = path;
-    const { jsonc, text } = this._read(validator);
+    const { jsonc, text } = this._read();
     this.#data = this.#old_data = jsonc;
     this.#text = text;
   }
@@ -159,14 +195,18 @@ export class Jsonc<T> implements Limo<T> {
     this.#data = value;
   }
 
-  private _read(validator?: Validator<T>) {
+  private _read() {
     if (existsSync(this.#path)) {
       const text = readFileSync(this.#path, { encoding: "utf8" });
       const jsonc = jsonc_parser.parse(text);
+      const { validator } = this.#options;
       if (validator != null && !validator(jsonc)) {
         throw new Error(`Invalid data: ${text}`);
       }
       return { jsonc: jsonc as T, text };
+    }
+    if (!this.#options.allowNoExist) {
+      throw new Error(`File not found: ${this.#path}`);
     }
     return { jsonc: undefined, text: undefined };
   }
