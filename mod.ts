@@ -113,10 +113,10 @@ export class Json<T> implements Limo<T> {
     if (existsSync(this.#path)) {
       const text = readFileSync(this.#path, { encoding: "utf8" });
       const json = JSON.parse(text) as unknown;
-      if (validator == null || !validator(json)) {
+      if (validator != null && !validator(json)) {
         throw new Error(`Invalid data: ${text}`);
       }
-      return json;
+      return json as T;
     }
     return undefined;
   }
