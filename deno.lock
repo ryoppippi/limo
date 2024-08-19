@@ -12,7 +12,7 @@
       "jsr:@std/jsonc@^1.0.0": "jsr:@std/jsonc@1.0.0",
       "jsr:@std/streams@^1.0.0": "jsr:@std/streams@1.0.0",
       "jsr:@std/toml@^1.0.0": "jsr:@std/toml@1.0.0",
-      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.1",
+      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.3",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:cronstrue": "npm:cronstrue@2.50.0",
       "npm:jsonc-parser@^3.2.1": "npm:jsonc-parser@3.3.1"
@@ -66,8 +66,8 @@
           "jsr:@std/collections@^1.0.4"
         ]
       },
-      "@std/yaml@1.0.1": {
-        "integrity": "0e9e51c9e27bbc06455710fd1bfab77a1762827695c591dcb14fddb2778f76b4"
+      "@std/yaml@1.0.3": {
+        "integrity": "456e4646968efe4b3c8eedf27535f2db5827fa8aa3bce28779953c0397dee40b"
       }
     },
     "npm": {
