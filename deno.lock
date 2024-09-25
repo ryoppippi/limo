@@ -4,15 +4,15 @@
     "specifiers": {
       "jsr:@cross/runtime@^1.0.0": "jsr:@cross/runtime@1.0.0",
       "jsr:@cross/test@^0.0.9": "jsr:@cross/test@0.0.9",
-      "jsr:@std/assert@^1.0.0": "jsr:@std/assert@1.0.3",
+      "jsr:@std/assert@^1.0.0": "jsr:@std/assert@1.0.6",
       "jsr:@std/bytes@^1.0.2": "jsr:@std/bytes@1.0.2",
       "jsr:@std/collections@^1.0.5": "jsr:@std/collections@1.0.5",
-      "jsr:@std/internal@^1.0.2": "jsr:@std/internal@1.0.2",
+      "jsr:@std/internal@^1.0.4": "jsr:@std/internal@1.0.4",
       "jsr:@std/json@^1.0.0": "jsr:@std/json@1.0.0",
       "jsr:@std/jsonc@^1.0.0": "jsr:@std/jsonc@1.0.1",
       "jsr:@std/streams@^1.0.0": "jsr:@std/streams@1.0.3",
       "jsr:@std/toml@^1.0.0": "jsr:@std/toml@1.0.1",
-      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.4",
+      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.5",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:cronstrue": "npm:cronstrue@2.50.0",
       "npm:jsonc-parser@^3.2.1": "npm:jsonc-parser@3.3.1"
@@ -27,10 +27,10 @@
           "jsr:@cross/runtime@^1.0.0"
         ]
       },
-      "@std/assert@1.0.3": {
-        "integrity": "b0d03ce1ced880df67132eea140623010d415848df66f6aa5df76507ca7c26d8",
+      "@std/assert@1.0.6": {
+        "integrity": "1904c05806a25d94fe791d6d883b685c9e2dcd60e4f9fc30f4fc5cf010c72207",
         "dependencies": [
-          "jsr:@std/internal@^1.0.2"
+          "jsr:@std/internal@^1.0.4"
         ]
       },
       "@std/bytes@1.0.2": {
@@ -39,8 +39,8 @@
       "@std/collections@1.0.5": {
         "integrity": "ab9eac23b57a0c0b89ba45134e61561f69f3d001f37235a248ed40be260c0c10"
       },
-      "@std/internal@1.0.2": {
-        "integrity": "f4cabe2021352e8bfc24e6569700df87bf070914fc38d4b23eddd20108ac4495"
+      "@std/internal@1.0.4": {
+        "integrity": "62e8e4911527e5e4f307741a795c0b0a9e6958d0b3790716ae71ce085f755422"
       },
       "@std/json@1.0.0": {
         "integrity": "985c1e544918d42e4e84072fc739ac4a19c3a5093292c99742ffcdd03fb6a268",
@@ -66,8 +66,8 @@
           "jsr:@std/collections@^1.0.5"
         ]
       },
-      "@std/yaml@1.0.4": {
-        "integrity": "f1e38fa5e110ff8550e938715e52c33347676dd00a1db858e092dd21a9df9941"
+      "@std/yaml@1.0.5": {
+        "integrity": "71ba3d334305ee2149391931508b2c293a8490f94a337eef3a09cade1a2a2742"
       }
     },
     "npm": {
