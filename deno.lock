@@ -6,13 +6,13 @@
       "jsr:@cross/test@^0.0.10": "jsr:@cross/test@0.0.10",
       "jsr:@std/assert@^1.0.0": "jsr:@std/assert@1.0.13",
       "jsr:@std/bytes@^1.0.5": "jsr:@std/bytes@1.0.6",
-      "jsr:@std/collections@^1.1.0": "jsr:@std/collections@1.1.0",
+      "jsr:@std/collections@^1.1.1": "jsr:@std/collections@1.1.1",
       "jsr:@std/internal@^1.0.6": "jsr:@std/internal@1.0.7",
       "jsr:@std/json@^1.0.2": "jsr:@std/json@1.0.2",
       "jsr:@std/jsonc@^1.0.0": "jsr:@std/jsonc@1.0.2",
       "jsr:@std/streams@^1.0.9": "jsr:@std/streams@1.0.9",
-      "jsr:@std/toml@^1.0.0": "jsr:@std/toml@1.0.6",
-      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.6",
+      "jsr:@std/toml@^1.0.0": "jsr:@std/toml@1.0.8",
+      "jsr:@std/yaml@^1.0.0": "jsr:@std/yaml@1.0.8",
       "npm:@types/node": "npm:@types/node@18.16.19",
       "npm:cronstrue": "npm:cronstrue@2.50.0",
       "npm:jsonc-parser@^3.2.1": "npm:jsonc-parser@3.3.1"
@@ -36,8 +36,8 @@
       "@std/bytes@1.0.6": {
         "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
       },
-      "@std/collections@1.1.0": {
-        "integrity": "2ee8761c84c3d203f7a4ecd376f9ca88a0c559817a4a54c9150f28c0b948027c"
+      "@std/collections@1.1.1": {
+        "integrity": "eff6443fbd9d5a6697018fb39c5d13d5f662f0045f21392d640693d0008ab2af"
       },
       "@std/internal@1.0.7": {
         "integrity": "39eeb5265190a7bc5d5591c9ff019490bd1f2c3907c044a11b0d545796158a0f"
@@ -60,14 +60,14 @@
           "jsr:@std/bytes@^1.0.5"
         ]
       },
-      "@std/toml@1.0.6": {
-        "integrity": "da225502aecad66d8d778a635e9b78991997c2567ef8c6dbbd595c0cfce14c51",
+      "@std/toml@1.0.8": {
+        "integrity": "eb8ae76b4cc1c6c13f2a91123675823adbec2380de75cd3748c628960d952164",
         "dependencies": [
-          "jsr:@std/collections@^1.1.0"
+          "jsr:@std/collections@^1.1.1"
         ]
       },
-      "@std/yaml@1.0.6": {
-        "integrity": "c9a5a914e1d51c46756cb10e356710035cfa905e713c90d3b711413fd3aead27"
+      "@std/yaml@1.0.8": {
+        "integrity": "90b8aab62995e929fa0ea5f4151c287275b63e321ac375c35ff7406ca60c169d"
       }
     },
     "npm": {
