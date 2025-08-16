@@ -242,3 +242,100 @@ baz:
   const yamlData = std_yaml.parse(data);
   assertEquals(yamlData, { foo: "bar", baz: ["qux", "quux", "corge"] });
 });
+
+test("Text with invalid data and allowInvalidData=true", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.txt");
+  writeFileSync(filepath, "bad content");
+
+  function validator(data: unknown): data is string {
+    return typeof data === "string" && data.includes("good");
+  }
+
+  {
+    using text = new Text(filepath, { validator, allowInvalidData: true });
+    assertEquals(text.data, undefined);
+    text.data = "good content";
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, "good content");
+});
+
+test("Json with invalid data and allowInvalidData=true", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.json");
+  writeFileSync(filepath, '{"bad": "data"}');
+
+  function validator(data: unknown): data is { good: string } {
+    return typeof data === "object" && data != null && "good" in data;
+  }
+
+  {
+    using json = new Json(filepath, { validator, allowInvalidData: true });
+    assertEquals(json.data, undefined);
+    json.data = { good: "content" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  const parsed = JSON.parse(data);
+  assertEquals(parsed, { good: "content" });
+});
+
+test("Jsonc with invalid data and allowInvalidData=true", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.jsonc");
+  writeFileSync(filepath, '{"bad": "data"} // comment');
+
+  function validator(data: unknown): data is { good: string } {
+    return typeof data === "object" && data != null && "good" in data;
+  }
+
+  {
+    using jsonc = new Jsonc(filepath, { validator, allowInvalidData: true });
+    assertEquals(jsonc.data, undefined);
+    jsonc.data = { good: "content" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  const parsed = jsonc_parser.parse(data);
+  assertEquals(parsed, { good: "content" });
+});
+
+test("Toml with invalid data and allowInvalidData=true", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.toml");
+  writeFileSync(filepath, 'bad = "data"');
+
+  function validator(data: unknown): data is { good: string } {
+    return typeof data === "object" && data != null && "good" in data;
+  }
+
+  {
+    using toml = new Toml(filepath, { validator, allowInvalidData: true });
+    assertEquals(toml.data, undefined);
+    toml.data = { good: "content" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, 'good = "content"\n');
+});
+
+test("Yaml with invalid data and allowInvalidData=true", () => {
+  const td = prepareTmpdir();
+  const filepath = join(td, "file.yaml");
+  writeFileSync(filepath, "bad: data");
+
+  function validator(data: unknown): data is { good: string } {
+    return typeof data === "object" && data != null && "good" in data;
+  }
+
+  {
+    using yaml = new Yaml(filepath, { validator, allowInvalidData: true });
+    assertEquals(yaml.data, undefined);
+    yaml.data = { good: "content" };
+  }
+
+  const data = readFileSync(filepath, "utf-8");
+  assertEquals(data, "good: content\n");
+});

@@ -14,6 +14,7 @@ interface Limo<T> {
 interface Options<T> {
   validator?: Validator<T>;
   allowNoExist?: boolean;
+  allowInvalidData?: boolean;
 }
 
 type ResolvedOptions<T> =
@@ -26,6 +27,7 @@ function resolveOptions<T>(
   return {
     validator: options.validator,
     allowNoExist: options.allowNoExist ?? true,
+    allowInvalidData: options.allowInvalidData ?? false,
   };
 }
 
@@ -47,6 +49,9 @@ export class Text implements Limo<string> {
   #path: string;
   #options: ResolvedOptions<string>;
 
+  constructor(path: string, options?: Omit<Options<string>, 'allowInvalidData'>);
+  constructor(path: string, options: Options<string> & { allowInvalidData: true });
+  constructor(path: string, options: Options<string> & { allowInvalidData: false });
   constructor(path: string, options: Options<string> = {}) {
     this.#options = resolveOptions(options);
     this.#path = path;
@@ -70,7 +75,10 @@ export class Text implements Limo<string> {
       const data = readFileSync(this.#path, { encoding: "utf8" });
       const { validator } = this.#options;
       if (validator != null && !validator(data)) {
-        throw new Error(`Invalid data: ${data}`);
+        if (!this.#options.allowInvalidData) {
+          throw new Error(`Invalid data: ${data}`);
+        }
+        return undefined;
       }
       return data;
     }
@@ -121,6 +129,9 @@ export class Json<T> implements Limo<T> {
   #path: string;
   #options: ResolvedOptions<T>;
 
+  constructor(path: string, options?: Omit<Options<T>, 'allowInvalidData'>);
+  constructor(path: string, options: Options<T> & { allowInvalidData: true });
+  constructor(path: string, options: Options<T> & { allowInvalidData: false });
   constructor(
     path: string,
     options: Options<T> = {},
@@ -148,7 +159,10 @@ export class Json<T> implements Limo<T> {
       const json = JSON.parse(text) as unknown;
       const { validator } = this.#options;
       if (validator != null && !validator(json)) {
-        throw new Error(`Invalid data: ${text}`);
+        if (!this.#options.allowInvalidData) {
+          throw new Error(`Invalid data: ${text}`);
+        }
+        return undefined;
       }
       return json as T;
     }
@@ -203,6 +217,9 @@ export class Jsonc<T> implements Limo<T> {
   #text: string | undefined;
   #options: ResolvedOptions<T>;
 
+  constructor(path: string, options?: Omit<Options<T>, 'allowInvalidData'>);
+  constructor(path: string, options: Options<T> & { allowInvalidData: true });
+  constructor(path: string, options: Options<T> & { allowInvalidData: false });
   constructor(
     path: string,
     options: Options<T> = {},
@@ -232,7 +249,10 @@ export class Jsonc<T> implements Limo<T> {
       const jsonc = jsonc_parser.parse(text);
       const { validator } = this.#options;
       if (validator != null && !validator(jsonc)) {
-        throw new Error(`Invalid data: ${text}`);
+        if (!this.#options.allowInvalidData) {
+          throw new Error(`Invalid data: ${text}`);
+        }
+        return { jsonc: undefined, text: undefined };
       }
       return { jsonc: jsonc as T, text };
     }
@@ -305,6 +325,9 @@ export class Toml<T> implements Limo<T> {
   #path: string;
   #options: ResolvedOptions<T>;
 
+  constructor(path: string, options?: Omit<Options<T>, 'allowInvalidData'>);
+  constructor(path: string, options: Options<T> & { allowInvalidData: true });
+  constructor(path: string, options: Options<T> & { allowInvalidData: false });
   constructor(
     path: string,
     options: Options<T> = {},
@@ -332,7 +355,10 @@ export class Toml<T> implements Limo<T> {
       const toml = std_toml.parse(text);
       const { validator } = this.#options;
       if (validator != null && !validator(toml)) {
-        throw new Error(`Invalid data: ${text}`);
+        if (!this.#options.allowInvalidData) {
+          throw new Error(`Invalid data: ${text}`);
+        }
+        return undefined;
       }
       return toml as T;
     }
@@ -382,6 +408,9 @@ export class Yaml<T> implements Limo<T> {
   #path: string;
   #options: ResolvedOptions<T>;
 
+  constructor(path: string, options?: Omit<Options<T>, 'allowInvalidData'>);
+  constructor(path: string, options: Options<T> & { allowInvalidData: true });
+  constructor(path: string, options: Options<T> & { allowInvalidData: false });
   constructor(
     path: string,
     options: Options<T> = {},
@@ -409,7 +438,10 @@ export class Yaml<T> implements Limo<T> {
       const yaml = std_yaml.parse(text);
       const { validator } = this.#options;
       if (validator != null && !validator(yaml)) {
-        throw new Error(`Invalid data: ${text}`);
+        if (!this.#options.allowInvalidData) {
+          throw new Error(`Invalid data: ${text}`);
+        }
+        return undefined;
       }
       return yaml as T;
     }
