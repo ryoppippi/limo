@@ -1,5 +1,4 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import * as jsonc_parser from "jsonc-parser";
 import * as std_toml from "@std/toml";
 import * as std_yaml from "@std/yaml";
 import type { SetRequired } from "type-fest";
@@ -279,113 +278,6 @@ export function createLimoJson<T>(
     parseOptions: {
       parse: (text: string) => JSON.parse(text) as T,
       stringify: (data: T) => JSON.stringify(data, null, 2),
-    },
-  });
-}
-
-/**
- * Create a JSONC file handler
- * JSONC is JSON with comments.
- * @example
- * ```ts
- * import { createLimoJsonc } from "@ryoppippi/limo";
- * {
- *   using jsonc = createLimoJsonc("/tmp/file.jsonc");
- *   jsonc.data = { hello: "world" };
- * }
- * ```
- *
- * @example
- * ```ts
- * // with validator
- * import { createLimoJsonc } from "@ryoppippi/limo";
- * function validator(data: unknown): data is { hello: string } {
- *   return typeof data === "object" && data != null && "hello" in data;
- * }
- * {
- *   using jsonc = createLimoJsonc("/tmp/file.jsonc", { validator });
- *   jsonc.data = { hello: "world" };
- * }
- * ```
- *
- * @example
- * ```ts
- * // with validator and graceful failure handling
- * import { createLimoJsonc } from "@ryoppippi/limo";
- * import { writeFileSync } from "node:fs";
- *
- * function validator(data: unknown): data is { config: any } {
- *   return typeof data === "object" && data != null && "config" in data;
- * }
- *
- * // Create a file with invalid content
- * writeFileSync("/tmp/settings.jsonc", '{"invalid": "data"} // comment');
- *
- * {
- *   using jsonc = createLimoJsonc("/tmp/settings.jsonc", {
- *     validator,
- *     allowValidatorFailure: true
- *   });
- *   if (jsonc.data === undefined) {
- *     // Handle invalid JSONC gracefully
- *     jsonc.data = { config: {} };
- *   }
- * }
- * ```
- */
-export function createLimoJsonc<T extends Record<string, unknown>>(
-  path: string,
-): Limo<T | undefined>;
-export function createLimoJsonc<T extends Record<string, unknown>>(
-  path: string,
-  options: Omit<Options<T>, "validator">,
-): Limo<T | undefined>;
-export function createLimoJsonc<T extends Record<string, unknown>>(
-  path: string,
-  options: Options<T> & {
-    validator: Validator<T>;
-    allowValidatorFailure: true;
-  },
-): Limo<T | undefined>;
-export function createLimoJsonc<T extends Record<string, unknown>>(
-  path: string,
-  options: Options<T> & {
-    validator: Validator<T>;
-    allowValidatorFailure?: false;
-  },
-): Limo<T>;
-export function createLimoJsonc<T extends Record<string, unknown>>(
-  path: string,
-  options: Options<T> = {},
-): Limo<T> | Limo<T | undefined> {
-  return new LimoFile(path, {
-    ...options,
-    parseOptions: {
-      parse: (text: string) => jsonc_parser.parse(text) as T,
-      stringify: (data: T) => JSON.stringify(data, null, 2),
-      preserveFormat: (oldText: string, oldData: T, newData: T) => {
-        const edits: jsonc_parser.EditResult[] = [];
-
-        for (const key of Object.keys(oldData ?? {})) {
-          if (Object.hasOwn(newData, key)) {
-            continue;
-          }
-          const edit = jsonc_parser.modify(oldText, [key], undefined, {});
-          edits.push(edit);
-        }
-
-        for (const [key, value] of Object.entries(newData)) {
-          const edit = jsonc_parser.modify(oldText, [key], value, {});
-          edits.push(edit);
-        }
-
-        const newText = jsonc_parser.applyEdits(oldText, edits.flat());
-
-        return jsonc_parser.applyEdits(
-          newText,
-          jsonc_parser.format(newText, undefined, {}),
-        );
-      },
     },
   });
 }
