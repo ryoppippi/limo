@@ -76,6 +76,10 @@ class LimoFile<T> implements Limo<T> {
   private _read(): { data: T | undefined; text: string | undefined } {
     if (existsSync(this.#path)) {
       const text = readFileSync(this.#path, { encoding: "utf8" });
+      // Handle empty files
+      if (text.trim() === "") {
+        return { data: undefined, text };
+      }
       try {
         const data = this.#parseOptions.parse(text);
         const { validator } = this.#options;

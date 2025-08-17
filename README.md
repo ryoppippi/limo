@@ -65,7 +65,7 @@ function validator(_data: unknown): _data is Data {
 
 // Read and write a JSON file with validation
 {
-  using json = createLimoJson("config.json", { validator });
+  using json = createLimoJson("user.json", { validator });
   json.data = { name: "John", age: 30 };
 }
 ```
