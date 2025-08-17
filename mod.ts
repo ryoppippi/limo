@@ -145,11 +145,18 @@ class LimoFile<T> implements Limo<T> {
  * ```ts
  * // With validator and graceful failure handling
  * import { createLimoText } from "@ryoppippi/limo";
+ * import { createFixture } from "fs-fixture";
+ * 
  * function validator(data: unknown): data is string {
  *   return typeof data === "string" && data.length > 0;
  * }
+ * 
+ * await using fixture = await createFixture({
+ *   "content.txt": "" // Empty file that will fail validation
+ * });
+ * 
  * {
- *   using text = createLimoText("file.txt", {
+ *   using text = createLimoText(fixture.getPath("content.txt"), {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -222,11 +229,18 @@ export function createLimoText(
  * ```ts
  * // with validator and graceful failure handling
  * import { createLimoJson } from "@ryoppippi/limo";
+ * import { createFixture } from "fs-fixture";
+ * 
  * function validator(data: unknown): data is { version: string } {
  *   return typeof data === "object" && data != null && "version" in data;
  * }
+ * 
+ * await using fixture = await createFixture({
+ *   "config.json": '{"invalid": "data"}' // Invalid data that will fail validation
+ * });
+ * 
  * {
- *   using json = createLimoJson("config.json", {
+ *   using json = createLimoJson(fixture.getPath("config.json"), {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -300,11 +314,18 @@ export function createLimoJson<T>(
  * ```ts
  * // with validator and graceful failure handling
  * import { createLimoJsonc } from "@ryoppippi/limo";
+ * import { createFixture } from "fs-fixture";
+ * 
  * function validator(data: unknown): data is { config: any } {
  *   return typeof data === "object" && data != null && "config" in data;
  * }
+ * 
+ * await using fixture = await createFixture({
+ *   "settings.jsonc": '{"invalid": "data"} // comment' // Invalid data
+ * });
+ * 
  * {
- *   using jsonc = createLimoJsonc("settings.jsonc", {
+ *   using jsonc = createLimoJsonc(fixture.getPath("settings.jsonc"), {
  *     validator,
  *     allowValidatorFailure: true
  *   });

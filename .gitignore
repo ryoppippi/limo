@@ -3,13 +3,3 @@
 /types
 /.coverage
 /npm
-
-# Test-generated files from JSDoc examples
-*.json
-*.jsonc
-*.toml
-*.yaml
-*.txt
-!deno.json
-!package.json
-!tsconfig.json
