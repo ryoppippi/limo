@@ -146,14 +146,14 @@ class LimoFile<T> implements Limo<T> {
  * // With validator and graceful failure handling
  * import { createLimoText } from "@ryoppippi/limo";
  * import { writeFileSync } from "node:fs";
- * 
+ *
  * function validator(data: unknown): data is string {
  *   return typeof data === "string" && data.length > 0;
  * }
- * 
+ *
  * // Create a file with invalid content
  * writeFileSync(".tmp/content.txt", ""); // Empty file that will fail validation
- * 
+ *
  * {
  *   using text = createLimoText(".tmp/content.txt", {
  *     validator,
@@ -229,14 +229,14 @@ export function createLimoText(
  * // with validator and graceful failure handling
  * import { createLimoJson } from "@ryoppippi/limo";
  * import { writeFileSync } from "node:fs";
- * 
+ *
  * function validator(data: unknown): data is { version: string } {
  *   return typeof data === "object" && data != null && "version" in data;
  * }
- * 
+ *
  * // Create a file with invalid content
  * writeFileSync(".tmp/config.json", '{"invalid": "data"}');
- * 
+ *
  * {
  *   using json = createLimoJson(".tmp/config.json", {
  *     validator,
@@ -313,14 +313,14 @@ export function createLimoJson<T>(
  * // with validator and graceful failure handling
  * import { createLimoJsonc } from "@ryoppippi/limo";
  * import { writeFileSync } from "node:fs";
- * 
+ *
  * function validator(data: unknown): data is { config: any } {
  *   return typeof data === "object" && data != null && "config" in data;
  * }
- * 
+ *
  * // Create a file with invalid content
  * writeFileSync(".tmp/settings.jsonc", '{"invalid": "data"} // comment');
- * 
+ *
  * {
  *   using jsonc = createLimoJsonc(".tmp/settings.jsonc", {
  *     validator,
