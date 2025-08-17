@@ -33,11 +33,11 @@ yarn dlx jsr add @ryoppippi/limo
 Here's a quick example of how to use `Limo` to read and write a JSON file:
 
 ```ts
-import { Json } from "@ryoppippi/limo";
+import { createLimoJson } from "@ryoppippi/limo";
 
 // Read and write a JSON file
 {
-  using json = new Json("config.json");
+  using json = createLimoJson("config.json");
   json.data = { hello: "world" };
 }
 
@@ -49,7 +49,7 @@ import { Json } from "@ryoppippi/limo";
 You can also provide a custom validator function to ensure the data is in the expected format:
 
 ```ts
-import { Json } from "@ryoppippi/limo";
+import { createLimoJson } from "@ryoppippi/limo";
 
 // Validator function
 interface Data {
@@ -65,12 +65,19 @@ function validator(_data: unknown): _data is Data {
 
 // Read and write a JSON file with validation
 {
-  using json = new Json("config.json", { validator });
+  using json = createLimoJson("config.json", { validator });
   json.data = { name: "John", age: 30 };
 }
 ```
 
-`Limo` supports other file formats as well, such as JSONC, TOML, and YAML. Simply use the corresponding class (`Jsonc`, `Toml`, `Yaml`) in a similar manner.
+`Limo` supports other file formats as well. Use the corresponding factory functions:
+
+- **Text files**: `createLimoText("file.txt")`
+- **JSON files**: `createLimoJson("config.json")`
+- **JSONC files**: `createLimoJsonc("config.jsonc")` (JSON with comments)
+- **TOML files**: `createLimoToml("config.toml")`
+- **YAML files**: `createLimoYaml("config.yaml")`
+
 
 For more detailed usage and examples, please refer to the [API documentation](https://jsr.io/@ryoppippi/limo/doc).
 

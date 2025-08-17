@@ -29,188 +29,35 @@ function resolveOptions<T>(
   };
 }
 
-/**
- * Text
- *
- * Read and automatically write text files.
- * @example
- * ```ts
- * import { Text } from "@ryoppippi/limo";
- * {
- *   using text = new Text("file.txt");
- *   text.data = "Hello, World!";
- * }
- * ```
- */
-export class Text implements Limo<string> {
-  #data: string | undefined;
-  #path: string;
-  #options: ResolvedOptions<string>;
-
-  constructor(path: string, options: Options<string> = {}) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
-
-  [Symbol.dispose]() {
-    this._write();
-  }
-
-  get data(): string | undefined {
-    return this.#data;
-  }
-
-  set data(value: string) {
-    this.#data = value;
-  }
-
-  private _read() {
-    if (existsSync(this.#path)) {
-      const data = readFileSync(this.#path, { encoding: "utf8" });
-      const { validator } = this.#options;
-      if (validator != null && !validator(data)) {
-        throw new Error(`Invalid data: ${data}`);
-      }
-      return data;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
-
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
-
-    writeFileSync(this.#path, this.#data);
-  }
+// Internal interfaces for format-specific parsing
+interface ParseOptions<T> {
+  parse: (text: string) => T;
+  stringify: (data: T) => string;
+  preserveFormat?: (oldText: string, oldData: T, newData: T) => string;
 }
 
-/**
- * Read and automatically write JSON files.
- * You can pass a validator function to validate the data.
- * @example
- * ```ts
- * // without validator
- * import { Json } from "@ryoppippi/limo";
- * {
- *   using json = new Json("file.json");
- *   json.data = { hello: "world" };
- * }
- * ```
- *
- * @example
- * ```ts
- * // with validator
- * import { Json } from "@ryoppippi/limo";
- * function validator(data: unknown): data is { hello: string } {
- *   return typeof data === "object" && data != null && "hello" in data;
- * }
- * {
- *   using json = new Json("file.json", { validator });
- *   json.data = { hello: "world" };
- * }
- * ```
- */
-
-export class Json<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
-
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
-
-  [Symbol.dispose]() {
-    this._write();
-  }
-
-  get data(): T | undefined {
-    return this.#data;
-  }
-
-  set data(value: T) {
-    this.#data = value;
-  }
-
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const json = JSON.parse(text) as unknown;
-      const { validator } = this.#options;
-      if (validator != null && !validator(json)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return json as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
-
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
-
-    writeFileSync(this.#path, JSON.stringify(this.#data, null, 2));
-  }
+interface InternalOptions<T> extends Options<T> {
+  parseOptions: ParseOptions<T>;
 }
 
-/**
- * Read and automatically write JSONC files.
- * JSONC is a JSON with comments.
- * You can pass a validator
- * function to validate the data.
- *
- * @example
- * ```ts
- * // without validator
- * import { Jsonc } from "@ryoppippi/limo";
- * {
- *   using jsonc = new Jsonc("file.jsonc");
- *   jsonc.data = { hello: "world" };
- * }
- * ```
- *
- * @example
- * ```ts
- * // with validator
- * import { Jsonc } from "@ryoppippi/limo";
- * function validator(data: unknown): data is { hello: string } {
- *   return typeof data === "object" && data != null && "hello" in data;
- * }
- * {
- *   using jsonc = new Jsonc("file.jsonc", { validator });
- *   jsonc.data = { hello: "world" };
- * }
- * ```
- */
-export class Jsonc<T> implements Limo<T> {
+// Internal unified class - not exported
+class LimoFile<T> implements Limo<T> {
   #data: T | undefined;
-  #old_data: T | undefined;
+  #oldData: T | undefined;
   #path: string;
   #text: string | undefined;
   #options: ResolvedOptions<T>;
+  #parseOptions: ParseOptions<T>;
 
   constructor(
     path: string,
-    options: Options<T> = {},
+    options: InternalOptions<T>,
   ) {
     this.#options = resolveOptions(options);
+    this.#parseOptions = options.parseOptions;
     this.#path = path;
-    const { jsonc, text } = this._read();
-    this.#data = this.#old_data = jsonc;
+    const { data, text } = this._read();
+    this.#data = this.#oldData = data;
     this.#text = text;
   }
 
@@ -226,20 +73,24 @@ export class Jsonc<T> implements Limo<T> {
     this.#data = value;
   }
 
-  private _read() {
+  private _read(): { data: T | undefined; text: string | undefined } {
     if (existsSync(this.#path)) {
       const text = readFileSync(this.#path, { encoding: "utf8" });
-      const jsonc = jsonc_parser.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(jsonc)) {
-        throw new Error(`Invalid data: ${text}`);
+      try {
+        const data = this.#parseOptions.parse(text);
+        const { validator } = this.#options;
+        if (validator != null && !validator(data)) {
+          throw new Error(`Invalid data: ${text}`);
+        }
+        return { data: data as T, text };
+      } catch (error) {
+        throw new Error(`Failed to parse ${this.#path}: ${error}`);
       }
-      return { jsonc: jsonc as T, text };
     }
     if (!this.#options.allowNoExist) {
       throw new Error(`File not found: ${this.#path}`);
     }
-    return { jsonc: undefined, text: undefined };
+    return { data: undefined, text: undefined };
   }
 
   private _write() {
@@ -247,42 +98,156 @@ export class Jsonc<T> implements Limo<T> {
       return;
     }
 
-    const text = this.#text ?? "";
-
-    const edits: jsonc_parser.EditResult[] = [];
-
-    for (const key of Object.keys(this.#old_data ?? {})) {
-      if (Object.hasOwn(this.#data, key)) {
-        continue;
+    try {
+      let content: string;
+      if (
+        this.#parseOptions.preserveFormat && this.#text != null &&
+        this.#oldData != null
+      ) {
+        content = this.#parseOptions.preserveFormat(
+          this.#text,
+          this.#oldData,
+          this.#data,
+        );
+      } else {
+        content = this.#parseOptions.stringify(this.#data);
       }
-      const edit = jsonc_parser.modify(text, [key], undefined, {});
-      edits.push(edit);
+      writeFileSync(this.#path, content);
+    } catch (error) {
+      throw new Error(`Failed to write ${this.#path}: ${error}`);
     }
-
-    for (const [key, value] of Object.entries(this.#data)) {
-      const edit = jsonc_parser.modify(text, [key], value, {});
-      edits.push(edit);
-    }
-
-    const newText = jsonc_parser.applyEdits(text, edits.flat());
-
-    const formatted = jsonc_parser.applyEdits(
-      newText,
-      jsonc_parser.format(newText, undefined, {}),
-    );
-    writeFileSync(this.#path, formatted);
   }
 }
 
 /**
- * Read and automatically write TOML files.
- * You can pass a validator function to validate the data.
+ * Create a text file handler
  * @example
  * ```ts
- * // without validator
- * import { Toml } from "@ryoppippi/limo";
+ * import { createLimoText } from "@ryoppippi/limo";
  * {
- *   using toml = new Toml("file.toml");
+ *   using text = createLimoText("file.txt");
+ *   text.data = "Hello, World!";
+ * }
+ * ```
+ */
+export function createLimoText(
+  path: string,
+  options: Options<string> = {},
+): Limo<string> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: (text: string) => text,
+      stringify: (data: string) => data,
+    },
+  });
+}
+
+/**
+ * Create a JSON file handler
+ * @example
+ * ```ts
+ * import { createLimoJson } from "@ryoppippi/limo";
+ * {
+ *   using json = createLimoJson("file.json");
+ *   json.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { createLimoJson } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using json = createLimoJson("file.json", { validator });
+ *   json.data = { hello: "world" };
+ * }
+ * ```
+ */
+export function createLimoJson<T>(
+  path: string,
+  options: Options<T> = {},
+): Limo<T> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: (text: string) => JSON.parse(text) as T,
+      stringify: (data: T) => JSON.stringify(data, null, 2),
+    },
+  });
+}
+
+/**
+ * Create a JSONC file handler
+ * JSONC is JSON with comments.
+ * @example
+ * ```ts
+ * import { createLimoJsonc } from "@ryoppippi/limo";
+ * {
+ *   using jsonc = createLimoJsonc("file.jsonc");
+ *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator
+ * import { createLimoJsonc } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { hello: string } {
+ *   return typeof data === "object" && data != null && "hello" in data;
+ * }
+ * {
+ *   using jsonc = createLimoJsonc("file.jsonc", { validator });
+ *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ */
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> = {},
+): Limo<T> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: (text: string) => jsonc_parser.parse(text) as T,
+      stringify: (data: T) => JSON.stringify(data, null, 2),
+      preserveFormat: (oldText: string, oldData: T, newData: T) => {
+        const edits: jsonc_parser.EditResult[] = [];
+
+        for (const key of Object.keys(oldData ?? {})) {
+          if (Object.hasOwn(newData, key)) {
+            continue;
+          }
+          const edit = jsonc_parser.modify(oldText, [key], undefined, {});
+          edits.push(edit);
+        }
+
+        for (const [key, value] of Object.entries(newData)) {
+          const edit = jsonc_parser.modify(oldText, [key], value, {});
+          edits.push(edit);
+        }
+
+        const newText = jsonc_parser.applyEdits(oldText, edits.flat());
+
+        return jsonc_parser.applyEdits(
+          newText,
+          jsonc_parser.format(newText, undefined, {}),
+        );
+      },
+    },
+  });
+}
+
+/**
+ * Create a TOML file handler
+ * @example
+ * ```ts
+ * import { createLimoToml } from "@ryoppippi/limo";
+ * {
+ *   using toml = createLimoToml("file.toml");
  *   toml.data = { hello: "world" };
  * }
  * ```
@@ -290,76 +255,36 @@ export class Jsonc<T> implements Limo<T> {
  * @example
  * ```ts
  * // with validator
- * import { Toml } from "@ryoppippi/limo";
+ * import { createLimoToml } from "@ryoppippi/limo";
  * function validator(data: unknown): data is { hello: string } {
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using toml = new Toml("file.toml", { validator });
+ *   using toml = createLimoToml("file.toml", { validator });
  *   toml.data = { hello: "world" };
  * }
  * ```
  */
-export class Toml<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
-
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
-
-  [Symbol.dispose]() {
-    this._write();
-  }
-
-  get data(): T | undefined {
-    return this.#data;
-  }
-
-  set data(value: T) {
-    this.#data = value;
-  }
-
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const toml = std_toml.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(toml)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return toml as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
-
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
-
-    writeFileSync(this.#path, std_toml.stringify(this.#data));
-  }
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> = {},
+): Limo<T> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: (text: string) => std_toml.parse(text) as T,
+      stringify: (data: T) => std_toml.stringify(data),
+    },
+  });
 }
 
 /**
- * Read and automatically write YAML files.
- * You can pass a validator function to validate the data.
+ * Create a YAML file handler
  * @example
  * ```ts
- * // without validator
- * import { Yaml } from "@ryoppippi/limo";
+ * import { createLimoYaml } from "@ryoppippi/limo";
  * {
- *   using yaml = new Yaml("file.yaml");
+ *   using yaml = createLimoYaml("file.yaml");
  *   yaml.data = { hello: "world" };
  * }
  * ```
@@ -367,63 +292,25 @@ export class Toml<T> implements Limo<T> {
  * @example
  * ```ts
  * // with validator
- * import { Yaml } from "@ryoppippi/limo";
+ * import { createLimoYaml } from "@ryoppippi/limo";
  * function validator(data: unknown): data is { hello: string } {
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using yaml = new Yaml("file.yaml", { validator });
+ *   using yaml = createLimoYaml("file.yaml", { validator });
  *   yaml.data = { hello: "world" };
  * }
  * ```
  */
-export class Yaml<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
-
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
-
-  [Symbol.dispose]() {
-    this._write();
-  }
-
-  get data(): T | undefined {
-    return this.#data;
-  }
-
-  set data(value: T) {
-    this.#data = value;
-  }
-
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const yaml = std_yaml.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(yaml)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return yaml as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
-
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
-
-    writeFileSync(this.#path, std_yaml.stringify(this.#data));
-  }
+export function createLimoYaml<T>(
+  path: string,
+  options: Options<T> = {},
+): Limo<T> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: (text: string) => std_yaml.parse(text) as T,
+      stringify: (data: T) => std_yaml.stringify(data),
+    },
+  });
 }

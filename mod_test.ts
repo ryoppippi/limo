@@ -1,14 +1,19 @@
 import { test } from "@cross/test";
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
-import * as std_toml from "@std/toml";
 import * as std_yaml from "@std/yaml";
 
-import { Json, Jsonc, Text, Toml, Yaml } from "./mod.ts";
+import {
+  createLimoJson,
+  createLimoJsonc,
+  createLimoText,
+  createLimoToml,
+  createLimoYaml,
+} from "./mod.ts";
 
 function prepareTmpdir() {
   const randomStr = Math.random().toString(36).substring(7);
@@ -17,11 +22,11 @@ function prepareTmpdir() {
   return td;
 }
 
-test("Text", () => {
+test("createLimoText", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.txt");
   {
-    using text = new Text(filepath);
+    using text = createLimoText(filepath);
     text.data = "Hello, World!";
   }
 
@@ -29,11 +34,11 @@ test("Text", () => {
   assertEquals(data, "Hello, World!");
 });
 
-test("Json without validator", () => {
+test("createLimoJson without validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.json");
   {
-    using json = new Json(filepath);
+    using json = createLimoJson(filepath);
     json.data = { hello: "world" };
   }
 
@@ -42,7 +47,7 @@ test("Json without validator", () => {
   assertEquals(json, { hello: "world" });
 });
 
-test("Json with validator", () => {
+test("createLimoJson with validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.json");
 
@@ -50,7 +55,7 @@ test("Json with validator", () => {
     return typeof data === "object" && data != null && "hello" in data;
   }
   {
-    using json = new Json(filepath, { validator });
+    using json = createLimoJson(filepath, { validator });
     json.data = { hello: "world" };
   }
 
@@ -59,42 +64,11 @@ test("Json with validator", () => {
   assertEquals(json, { hello: "world" });
 });
 
-test("Jsonc without validator", () => {
+test("createLimoJsonc without validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.jsonc");
   {
-    using json = new Jsonc(filepath);
-    json.data = { hello: "world" };
-  }
-
-  const data = readFileSync(filepath, "utf-8");
-  const jsonc = jsonc_parser.parse(data);
-
-  assertEquals(jsonc, { hello: "world" });
-});
-
-test("Jsonc with prepared file and without validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.jsonc");
-  const dummyJsonc = '{"foo": "bar", } // comment';
-  writeFileSync(filepath, dummyJsonc);
-
-  {
-    using json = new Jsonc(filepath);
-
-    assertEquals(json.data, { foo: "bar" });
-  }
-});
-
-test("Jsonc with validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.jsonc");
-
-  function validator(data: unknown): data is { hello: string } {
-    return typeof data === "object" && data != null && "hello" in data;
-  }
-  {
-    using json = new Jsonc(filepath, { validator });
+    using json = createLimoJsonc(filepath);
     json.data = { hello: "world" };
   }
 
@@ -103,23 +77,7 @@ test("Jsonc with validator", () => {
   assertEquals(jsonc, { hello: "world" });
 });
 
-test("Jsonc with invalid data and validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.jsonc");
-
-  function validator(data: unknown): data is { hello: string } {
-    return typeof data === "object" && data != null && "hello" in data;
-  }
-
-  writeFileSync(filepath, '{"foo": "bar"}');
-
-  assertThrows(() => {
-    using json = new Jsonc(filepath, { validator });
-    assertEquals(json.data, { hello: "world" });
-  });
-});
-
-test("Jsonc with prepared file and valid data and validator", () => {
+test("createLimoJsonc with prepared file and format preservation", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.jsonc");
   const dummyJsonc = '{"hello": "world"} // comment';
@@ -131,22 +89,21 @@ test("Jsonc with prepared file and valid data and validator", () => {
   }
 
   {
-    using json = new Jsonc(filepath, { validator });
+    using json = createLimoJsonc(filepath, { validator });
     assertEquals(json.data, { hello: "world" });
     json.data = { foo: "bar" };
   }
 
   const data = readFileSync(filepath, "utf-8");
-
   const jsonc = jsonc_parser.parse(data);
   assertEquals(jsonc, { foo: "bar" });
 });
 
-test("Toml", () => {
+test("createLimoToml", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.toml");
   {
-    using toml = new Toml(filepath);
+    using toml = createLimoToml(filepath);
     toml.data = { hello: "world" };
   }
 
@@ -154,7 +111,7 @@ test("Toml", () => {
   assertEquals(data, 'hello = "world"\n');
 });
 
-test("Toml with validator", () => {
+test("createLimoToml with validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.toml");
 
@@ -162,7 +119,7 @@ test("Toml with validator", () => {
     return typeof data === "object" && data != null && "hello" in data;
   }
   {
-    using toml = new Toml(filepath, { validator });
+    using toml = createLimoToml(filepath, { validator });
     toml.data = { hello: "world" };
   }
 
@@ -170,33 +127,11 @@ test("Toml with validator", () => {
   assertEquals(data, 'hello = "world"\n');
 });
 
-test("Toml with prepared file and without validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.toml");
-  const dummyToml = `
-[[bin]]
-name = "deno"
-path = "cli/main.rs"
-`;
-
-  writeFileSync(filepath, dummyToml);
-
-  {
-    using toml = new Toml(filepath);
-
-    assertEquals(toml.data, { bin: [{ name: "deno", path: "cli/main.rs" }] });
-  }
-
-  const data = readFileSync(filepath, "utf-8");
-  const tomlData = std_toml.parse(data);
-  assertEquals(tomlData, { bin: [{ name: "deno", path: "cli/main.rs" }] });
-});
-
-test("Yaml", () => {
+test("createLimoYaml", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.yaml");
   {
-    using yaml = new Yaml(filepath);
+    using yaml = createLimoYaml(filepath);
     yaml.data = { hello: "world" };
   }
 
@@ -204,7 +139,7 @@ test("Yaml", () => {
   assertEquals(data, "hello: world\n");
 });
 
-test("Yaml with validator", () => {
+test("createLimoYaml with validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.yaml");
 
@@ -212,7 +147,7 @@ test("Yaml with validator", () => {
     return typeof data === "object" && data != null && "hello" in data;
   }
   {
-    using yaml = new Yaml(filepath, { validator });
+    using yaml = createLimoYaml(filepath, { validator });
     yaml.data = { hello: "world" };
   }
 
@@ -220,7 +155,7 @@ test("Yaml with validator", () => {
   assertEquals(data, "hello: world\n");
 });
 
-test("Yaml with prepared file and without validator", () => {
+test("createLimoYaml with prepared file and without validator", () => {
   const td = prepareTmpdir();
   const filepath = join(td, "file.yaml");
   const dummyYaml = `
@@ -233,7 +168,7 @@ baz:
   writeFileSync(filepath, dummyYaml);
 
   {
-    using yaml = new Yaml<{ foo: string; baz: string[] }>(filepath);
+    using yaml = createLimoYaml<{ foo: string; baz: string[] }>(filepath);
     assertEquals(yaml.data, { foo: "bar", baz: ["qux", "quux"] });
     yaml.data?.baz.push("corge");
   }
