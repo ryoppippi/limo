@@ -5,10 +5,12 @@ import * as std_yaml from "@std/yaml";
 import { createFixture } from "fs-fixture";
 
 import {
+  createLimoCustom,
   createLimoJson,
   createLimoText,
   createLimoToml,
   createLimoYaml,
+  type CustomFormat,
 } from "./mod.ts";
 
 test("createLimoText", async () => {
@@ -238,4 +240,209 @@ test("createLimoText with validator failure and allowValidatorFailure: true", as
     });
     assertEquals(text.data, undefined);
   }
+});
+
+test("createLimoCustom - CSV format", async () => {
+  await using fixture = await createFixture({});
+  const filepath = fixture.getPath("data.csv");
+
+  const csvFormat: CustomFormat<string[]> = {
+    parse: (text: string): string[] => text.split(",").map((s) => s.trim()),
+    stringify: (data: string[]): string => data.join(", "),
+  };
+
+  {
+    using csv = createLimoCustom(filepath, csvFormat);
+    csv.data = ["apple", "banana", "cherry"];
+  }
+
+  const data = await fixture.readFile("data.csv", "utf-8");
+  assertEquals(data, "apple, banana, cherry");
+});
+
+test("createLimoCustom - Key-value format with validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = fixture.getPath("config.conf");
+
+  interface Config {
+    name: string;
+    version: number;
+  }
+
+  function validator(data: unknown): data is Config {
+    return typeof data === "object" && data != null &&
+      "name" in data && "version" in data &&
+      typeof (data as Record<string, unknown>).name === "string" &&
+      typeof (data as Record<string, unknown>).version === "number";
+  }
+
+  const configFormat: CustomFormat<Config> = {
+    parse: (text: string): Config => {
+      const lines = text.split("\n").filter((line) => line.trim());
+      const config = {} as Record<string, string | number>;
+      lines.forEach((line) => {
+        const [key, value] = line.split("=");
+        if (key && value) {
+          const trimmedKey = key.trim();
+          const trimmedValue = value.trim();
+          config[trimmedKey] = isNaN(Number(trimmedValue))
+            ? trimmedValue
+            : Number(trimmedValue);
+        }
+      });
+      return config as unknown as Config;
+    },
+    stringify: (data: Config): string =>
+      Object.entries(data).map(([k, v]) => `${k}=${v}`).join("\n"),
+  };
+
+  {
+    using config = createLimoCustom(filepath, configFormat, { validator });
+    config.data = { name: "myapp", version: 2 };
+  }
+
+  const data = await fixture.readFile("config.conf", "utf-8");
+  assertEquals(data, "name=myapp\nversion=2");
+});
+
+test("createLimoCustom - With prepared file", async () => {
+  await using fixture = await createFixture({
+    "data.csv": "red,green,blue",
+  });
+  const filepath = fixture.getPath("data.csv");
+
+  const csvFormat: CustomFormat<string[]> = {
+    parse: (text: string): string[] => text.split(",").map((s) => s.trim()),
+    stringify: (data: string[]): string => data.join(", "),
+  };
+
+  {
+    using csv = createLimoCustom(filepath, csvFormat);
+    assertEquals(csv.data, ["red", "green", "blue"]);
+    csv.data?.push("yellow");
+  }
+
+  const data = await fixture.readFile("data.csv", "utf-8");
+  assertEquals(data, "red, green, blue, yellow");
+});
+
+test("createLimoCustom - With validator failure and allowValidatorFailure: true", async () => {
+  await using fixture = await createFixture({
+    "config.conf": "invalid=data\nmissing=version",
+  });
+  const filepath = fixture.getPath("config.conf");
+
+  interface Config {
+    name: string;
+    version: number;
+  }
+
+  function validator(data: unknown): data is Config {
+    return typeof data === "object" && data != null &&
+      "name" in data && "version" in data &&
+      typeof (data as Record<string, unknown>).name === "string" &&
+      typeof (data as Record<string, unknown>).version === "number";
+  }
+
+  const configFormat: CustomFormat<Config> = {
+    parse: (text: string): Config => {
+      const lines = text.split("\n").filter((line) => line.trim());
+      const config = {} as Record<string, string | number>;
+      lines.forEach((line) => {
+        const [key, value] = line.split("=");
+        if (key && value) {
+          const trimmedKey = key.trim();
+          const trimmedValue = value.trim();
+          config[trimmedKey] = isNaN(Number(trimmedValue))
+            ? trimmedValue
+            : Number(trimmedValue);
+        }
+      });
+      return config as unknown as Config;
+    },
+    stringify: (data: Config): string =>
+      Object.entries(data).map(([k, v]) => `${k}=${v}`).join("\n"),
+  };
+
+  {
+    using config = createLimoCustom(filepath, configFormat, {
+      validator,
+      allowValidatorFailure: true,
+    });
+    assertEquals(config.data, undefined);
+  }
+});
+
+test("createLimoCustom - With validator failure and allowValidatorFailure: false", async () => {
+  await using fixture = await createFixture({
+    "config.conf": "invalid=data\nmissing=version",
+  });
+  const filepath = fixture.getPath("config.conf");
+
+  interface Config {
+    name: string;
+    version: number;
+  }
+
+  function validator(data: unknown): data is Config {
+    return typeof data === "object" && data != null &&
+      "name" in data && "version" in data &&
+      typeof (data as Record<string, unknown>).name === "string" &&
+      typeof (data as Record<string, unknown>).version === "number";
+  }
+
+  const configFormat: CustomFormat<Config> = {
+    parse: (text: string): Config => {
+      const lines = text.split("\n").filter((line) => line.trim());
+      const config = {} as Record<string, string | number>;
+      lines.forEach((line) => {
+        const [key, value] = line.split("=");
+        if (key && value) {
+          const trimmedKey = key.trim();
+          const trimmedValue = value.trim();
+          config[trimmedKey] = isNaN(Number(trimmedValue))
+            ? trimmedValue
+            : Number(trimmedValue);
+        }
+      });
+      return config as unknown as Config;
+    },
+    stringify: (data: Config): string =>
+      Object.entries(data).map(([k, v]) => `${k}=${v}`).join("\n"),
+  };
+
+  assertThrows(() => {
+    using _config = createLimoCustom(filepath, configFormat, {
+      validator,
+      allowValidatorFailure: false,
+    });
+  });
+});
+
+test("createLimoCustom - Custom JSON-like format", async () => {
+  await using fixture = await createFixture({});
+  const filepath = fixture.getPath("custom.dat");
+
+  interface Person {
+    name: string;
+    age: number;
+  }
+
+  const customFormat: CustomFormat<Person> = {
+    parse: (text: string): Person => {
+      const match = text.match(/Person\{name:([^,]+),age:(\d+)\}/);
+      if (!match) throw new Error("Invalid format");
+      return { name: match[1], age: parseInt(match[2]) };
+    },
+    stringify: (data: Person): string =>
+      `Person{name:${data.name},age:${data.age}}`,
+  };
+
+  {
+    using person = createLimoCustom(filepath, customFormat);
+    person.data = { name: "Alice", age: 30 };
+  }
+
+  const data = await fixture.readFile("custom.dat", "utf-8");
+  assertEquals(data, "Person{name:Alice,age:30}");
 });
