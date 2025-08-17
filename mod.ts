@@ -397,3 +397,116 @@ export function createLimoYaml<T>(
     },
   });
 }
+
+/**
+ * Custom format interface for createLimoCustom
+ */
+export interface CustomFormat<T> {
+  /** Parse text content to typed data */
+  parse: (text: string) => T;
+  /** Serialize data to text content */
+  stringify: (data: T) => string;
+  /** Optional format preservation function */
+  preserveFormat?: (oldText: string, oldData: T, newData: T) => string;
+}
+
+/**
+ * Create a custom format file handler with user-defined parse and stringify functions
+ * @example
+ * ```ts
+ * import { createLimoCustom } from "@ryoppippi/limo";
+ *
+ * // Custom CSV format
+ * const csvFormat = {
+ *   parse: (text: string): string[] => text.split(',').map(s => s.trim()),
+ *   stringify: (data: string[]): string => data.join(', ')
+ * };
+ *
+ * {
+ *   using csv = createLimoCustom("/tmp/data.csv", csvFormat);
+ *   csv.data = ["apple", "banana", "cherry"];
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // Custom format with validator and format preservation
+ * import { createLimoCustom } from "@ryoppippi/limo";
+ *
+ * interface Config { name: string; version: number; }
+ *
+ * function validator(data: unknown): data is Config {
+ *   return typeof data === "object" && data != null &&
+ *          "name" in data && "version" in data;
+ * }
+ *
+ * const customFormat = {
+ *   parse: (text: string): Config => {
+ *     const lines = text.split('\n').filter(line => line.trim());
+ *     const config = {} as any;
+ *     lines.forEach(line => {
+ *       const [key, value] = line.split('=');
+ *       config[key.trim()] = isNaN(Number(value)) ? value.trim() : Number(value);
+ *     });
+ *     return config;
+ *   },
+ *   stringify: (data: Config): string =>
+ *     Object.entries(data).map(([k, v]) => `${k}=${v}`).join('\n'),
+ *   preserveFormat: (oldText: string, oldData: Config, newData: Config): string => {
+ *     // Preserve comments and formatting while updating values
+ *     let result = oldText;
+ *     Object.entries(newData).forEach(([key, value]) => {
+ *       if (oldData[key as keyof Config] !== value) {
+ *         const regex = new RegExp(`^(\\s*${key}\\s*=\\s*).*$`, 'm');
+ *         result = result.replace(regex, `$1${value}`);
+ *       }
+ *     });
+ *     return result;
+ *   }
+ * };
+ *
+ * {
+ *   using config = createLimoCustom("/tmp/app.conf", customFormat, { validator });
+ *   config.data = { name: "myapp", version: 2 };
+ * }
+ * ```
+ */
+export function createLimoCustom<T>(
+  path: string,
+  format: CustomFormat<T>,
+): Limo<T | undefined>;
+export function createLimoCustom<T>(
+  path: string,
+  format: CustomFormat<T>,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoCustom<T>(
+  path: string,
+  format: CustomFormat<T>,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoCustom<T>(
+  path: string,
+  format: CustomFormat<T>,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoCustom<T>(
+  path: string,
+  format: CustomFormat<T>,
+  options: Options<T> = {},
+): Limo<T> | Limo<T | undefined> {
+  return new LimoFile(path, {
+    ...options,
+    parseOptions: {
+      parse: format.parse,
+      stringify: format.stringify,
+      preserveFormat: format.preserveFormat,
+    },
+  });
+}
