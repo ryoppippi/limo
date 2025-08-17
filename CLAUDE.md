@@ -25,7 +25,6 @@ Limo is a lightweight file I/O library that uses the `using` statement for autom
 - **Factory functions**: Public API functions that create LimoFile instances with format-specific parsing:
   - `createLimoText()` - Plain text files
   - `createLimoJson()` - JSON files with 2-space indentation
-  - `createLimoJsonc()` - JSON with comments, preserves formatting and comments
   - `createLimoToml()` - TOML files using @std/toml
   - `createLimoYaml()` - YAML files using @std/yaml
 
@@ -33,13 +32,11 @@ Limo is a lightweight file I/O library that uses the `using` statement for autom
 
 1. **Using Statement Pattern**: All file operations use `using` declarations for automatic cleanup via Symbol.dispose
 2. **Validator Pattern**: Optional type validation functions can be provided to ensure data integrity
-3. **Format Preservation**: JSONC files preserve comments and formatting when possible using jsonc-parser
 4. **Lazy Writing**: Files are only written when the `using` block exits and data has been modified
 
 ### Dependencies
 
 - `node:fs` for file operations
-- `jsonc-parser` for JSONC support with comment preservation
 - `@std/toml`, `@std/yaml` for TOML/YAML parsing
 - `fs-fixture` for test file management
 

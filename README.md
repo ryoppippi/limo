@@ -6,13 +6,13 @@
 #### *Lire* + *Memo* = **Limo**
 
 `Limo` is a tiny library for reading and automatically writing files. 
-It supports various file formats such as JSON, JSONC (JSON with comments), TOML, and YAML.
+It supports various file formats such as JSON, TOML, and YAML.
 
 ## Features
 
 - Read and write files files effortlessly
 - Automatic writing of changes back to the file
-- Support for JSON, JSONC, TOML, and YAML file formats
+- Support for JSON, TOML, and YAML file formats
 - Optional data validation using custom validator functions
 - Lightweight and easy to use
 
@@ -123,7 +123,6 @@ writeFileSync("/tmp/config.json", '{"invalid": "data"}');
 
 - **Text files**: `createLimoText("file.txt")`
 - **JSON files**: `createLimoJson("config.json")`
-- **JSONC files**: `createLimoJsonc("config.jsonc")` (JSON with comments)
 - **TOML files**: `createLimoToml("config.toml")`
 - **YAML files**: `createLimoYaml("config.yaml")`
 

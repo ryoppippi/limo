@@ -1,13 +1,11 @@
 import { test } from "@cross/test";
 import { assertEquals, assertThrows } from "@std/assert";
 
-import * as jsonc_parser from "jsonc-parser";
 import * as std_yaml from "@std/yaml";
 import { createFixture } from "fs-fixture";
 
 import {
   createLimoJson,
-  createLimoJsonc,
   createLimoText,
   createLimoToml,
   createLimoYaml,
@@ -53,40 +51,6 @@ test("createLimoJson with validator", async () => {
   const data = await fixture.readFile("file.json", "utf-8");
   const json = JSON.parse(data);
   assertEquals(json, { hello: "world" });
-});
-
-test("createLimoJsonc without validator", async () => {
-  await using fixture = await createFixture({});
-  const filepath = fixture.getPath("file.jsonc");
-  {
-    using json = createLimoJsonc(filepath);
-    json.data = { hello: "world" };
-  }
-
-  const data = await fixture.readFile("file.jsonc", "utf-8");
-  const jsonc = jsonc_parser.parse(data);
-  assertEquals(jsonc, { hello: "world" });
-});
-
-test("createLimoJsonc with prepared file and format preservation", async () => {
-  await using fixture = await createFixture({
-    "file.jsonc": '{"hello": "world"} // comment',
-  });
-  const filepath = fixture.getPath("file.jsonc");
-
-  function validator(data: unknown): data is { hello?: string; foo?: string } {
-    return typeof data === "object" && data != null && "hello" in data;
-  }
-
-  {
-    using json = createLimoJsonc(filepath, { validator });
-    assertEquals(json.data, { hello: "world" });
-    json.data = { foo: "bar" };
-  }
-
-  const data = await fixture.readFile("file.jsonc", "utf-8");
-  const jsonc = jsonc_parser.parse(data);
-  assertEquals(jsonc, { foo: "bar" });
 });
 
 test("createLimoToml", async () => {
@@ -217,25 +181,6 @@ test("createLimoJson with validator failure and allowValidatorFailure: undefined
   assertThrows(() => {
     using _json = createLimoJson(filepath, { validator });
   });
-});
-
-test("createLimoJsonc with validator failure and allowValidatorFailure: true", async () => {
-  await using fixture = await createFixture({
-    "file.jsonc": '{"invalid": "data"} // comment',
-  });
-  const filepath = fixture.getPath("file.jsonc");
-
-  function validator(data: unknown): data is { hello: string } {
-    return typeof data === "object" && data != null && "hello" in data;
-  }
-
-  {
-    using jsonc = createLimoJsonc(filepath, {
-      validator,
-      allowValidatorFailure: true,
-    });
-    assertEquals(jsonc.data, undefined);
-  }
 });
 
 test("createLimoToml with validator failure and allowValidatorFailure: true", async () => {
