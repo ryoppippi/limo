@@ -37,7 +37,7 @@ import { createLimoJson } from "@ryoppippi/limo";
 
 // Read and write a JSON file
 {
-  using json = createLimoJson("config.json");
+  using json = createLimoJson("/tmp/config.json");
   json.data = { hello: "world" };
 }
 
@@ -65,7 +65,7 @@ function validator(_data: unknown): _data is Data {
 
 // Read and write a JSON file with validation
 {
-  using json = createLimoJson("user.json", { validator });
+  using json = createLimoJson("/tmp/user.json", { validator });
   json.data = { name: "John", age: 30 };
 }
 ```
@@ -76,6 +76,7 @@ By default, if a validator function fails, `Limo` will throw an error. However, 
 
 ```ts
 import { createLimoJson } from "@ryoppippi/limo";
+import { writeFileSync } from "node:fs";
 
 interface Config {
   version: string;
@@ -88,9 +89,12 @@ function validator(data: unknown): data is Config {
     typeof config.version === "string" && Array.isArray(config.features);
 }
 
+// Create a file with invalid content
+writeFileSync("/tmp/config.json", '{"invalid": "data"}');
+
 // Graceful failure: returns undefined if validation fails
 {
-  using json = createLimoJson("config.json", { 
+  using json = createLimoJson("/tmp/config.json", { 
     validator, 
     allowValidatorFailure: true 
   });
@@ -106,13 +110,13 @@ function validator(data: unknown): data is Config {
 }
 
 // Strict mode: throws error if validation fails (default behavior)
-{
-  using json = createLimoJson("config.json", { 
-    validator,
-    allowValidatorFailure: false  // or omit this option
-  });
-  // Will throw an error if validation fails
-}
+// {
+//   using json = createLimoJson("/tmp/config.json", { 
+//     validator,
+//     allowValidatorFailure: false  // or omit this option
+//   });
+//   // Will throw an error if validation fails
+// }
 ```
 
 `Limo` supports other file formats as well. Use the corresponding factory functions:

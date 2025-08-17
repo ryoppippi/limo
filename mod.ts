@@ -136,7 +136,7 @@ class LimoFile<T> implements Limo<T> {
  * ```ts
  * import { createLimoText } from "@ryoppippi/limo";
  * {
- *   using text = createLimoText("file.txt");
+ *   using text = createLimoText("/tmp/file.txt");
  *   text.data = "Hello, World!";
  * }
  * ```
@@ -145,18 +145,17 @@ class LimoFile<T> implements Limo<T> {
  * ```ts
  * // With validator and graceful failure handling
  * import { createLimoText } from "@ryoppippi/limo";
- * import { createFixture } from "fs-fixture";
+ * import { writeFileSync } from "node:fs";
  * 
  * function validator(data: unknown): data is string {
  *   return typeof data === "string" && data.length > 0;
  * }
  * 
- * await using fixture = await createFixture({
- *   "content.txt": "" // Empty file that will fail validation
- * });
+ * // Create a file with invalid content
+ * writeFileSync("/tmp/content.txt", ""); // Empty file that will fail validation
  * 
  * {
- *   using text = createLimoText(fixture.getPath("content.txt"), {
+ *   using text = createLimoText("/tmp/content.txt", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -207,7 +206,7 @@ export function createLimoText(
  * ```ts
  * import { createLimoJson } from "@ryoppippi/limo";
  * {
- *   using json = createLimoJson("file.json");
+ *   using json = createLimoJson("/tmp/file.json");
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -220,7 +219,7 @@ export function createLimoText(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using json = createLimoJson("file.json", { validator });
+ *   using json = createLimoJson("/tmp/file.json", { validator });
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -229,18 +228,17 @@ export function createLimoText(
  * ```ts
  * // with validator and graceful failure handling
  * import { createLimoJson } from "@ryoppippi/limo";
- * import { createFixture } from "fs-fixture";
+ * import { writeFileSync } from "node:fs";
  * 
  * function validator(data: unknown): data is { version: string } {
  *   return typeof data === "object" && data != null && "version" in data;
  * }
  * 
- * await using fixture = await createFixture({
- *   "config.json": '{"invalid": "data"}' // Invalid data that will fail validation
- * });
+ * // Create a file with invalid content
+ * writeFileSync("/tmp/config.json", '{"invalid": "data"}');
  * 
  * {
- *   using json = createLimoJson(fixture.getPath("config.json"), {
+ *   using json = createLimoJson("/tmp/config.json", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -292,7 +290,7 @@ export function createLimoJson<T>(
  * ```ts
  * import { createLimoJsonc } from "@ryoppippi/limo";
  * {
- *   using jsonc = createLimoJsonc("file.jsonc");
+ *   using jsonc = createLimoJsonc("/tmp/file.jsonc");
  *   jsonc.data = { hello: "world" };
  * }
  * ```
@@ -305,7 +303,7 @@ export function createLimoJson<T>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using jsonc = createLimoJsonc("file.jsonc", { validator });
+ *   using jsonc = createLimoJsonc("/tmp/file.jsonc", { validator });
  *   jsonc.data = { hello: "world" };
  * }
  * ```
@@ -314,18 +312,17 @@ export function createLimoJson<T>(
  * ```ts
  * // with validator and graceful failure handling
  * import { createLimoJsonc } from "@ryoppippi/limo";
- * import { createFixture } from "fs-fixture";
+ * import { writeFileSync } from "node:fs";
  * 
  * function validator(data: unknown): data is { config: any } {
  *   return typeof data === "object" && data != null && "config" in data;
  * }
  * 
- * await using fixture = await createFixture({
- *   "settings.jsonc": '{"invalid": "data"} // comment' // Invalid data
- * });
+ * // Create a file with invalid content
+ * writeFileSync("/tmp/settings.jsonc", '{"invalid": "data"} // comment');
  * 
  * {
- *   using jsonc = createLimoJsonc(fixture.getPath("settings.jsonc"), {
+ *   using jsonc = createLimoJsonc("/tmp/settings.jsonc", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
