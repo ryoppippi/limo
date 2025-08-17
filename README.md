@@ -6,13 +6,14 @@
 #### *Lire* + *Memo* = **Limo**
 
 `Limo` is a tiny library for reading and automatically writing files. 
-It supports various file formats such as JSON, TOML, and YAML.
+It supports various file formats such as JSON, TOML, YAML, and custom formats with user-defined parse/stringify functions.
 
 ## Features
 
 - Read and write files files effortlessly
 - Automatic writing of changes back to the file
-- Support for JSON, TOML, and YAML file formats
+- Support for JSON, TOML, YAML, and custom file formats
+- Custom format support with user-defined parse/stringify functions
 - Optional data validation using custom validator functions
 - Lightweight and easy to use
 
@@ -125,6 +126,77 @@ writeFileSync("/tmp/config.json", '{"invalid": "data"}');
 - **JSON files**: `createLimoJson("config.json")`
 - **TOML files**: `createLimoToml("config.toml")`
 - **YAML files**: `createLimoYaml("config.yaml")`
+- **Custom formats**: `createLimoCustom("file.ext", customFormat)`
+
+### Custom Formats
+
+For file formats not built into `Limo`, you can define your own custom format using `createLimoCustom`:
+
+```ts
+import { createLimoCustom } from "@ryoppippi/limo";
+
+// Define a CSV format
+const csvFormat = {
+  parse: (text: string): string[] => text.split(',').map(s => s.trim()),
+  stringify: (data: string[]): string => data.join(', ')
+};
+
+{
+  using csv = createLimoCustom("/tmp/data.csv", csvFormat);
+  csv.data = ["apple", "banana", "cherry"];
+}
+```
+
+You can also define more complex formats with validation:
+
+```ts
+import { createLimoCustom } from "@ryoppippi/limo";
+
+interface Config {
+  name: string;
+  version: number;
+}
+
+function validator(data: unknown): data is Config {
+  return typeof data === "object" && data != null && 
+         "name" in data && "version" in data;
+}
+
+const configFormat = {
+  parse: (text: string): Config => {
+    const lines = text.split('\n').filter(line => line.trim());
+    const config = {} as any;
+    lines.forEach(line => {
+      const [key, value] = line.split('=');
+      config[key.trim()] = isNaN(Number(value)) ? value.trim() : Number(value);
+    });
+    return config;
+  },
+  stringify: (data: Config): string => 
+    Object.entries(data).map(([k, v]) => `${k}=${v}`).join('\n'),
+  // Optional: preserve comments and formatting
+  preserveFormat: (oldText: string, oldData: Config, newData: Config): string => {
+    let result = oldText;
+    Object.entries(newData).forEach(([key, value]) => {
+      if (oldData[key as keyof Config] !== value) {
+        const regex = new RegExp(`^(.*${key}\\s*=\\s*).*$`, 'm');
+        result = result.replace(regex, `$1${value}`);
+      }
+    });
+    return result;
+  }
+};
+
+{
+  using config = createLimoCustom("/tmp/app.conf", configFormat, { validator });
+  config.data = { name: "myapp", version: 2 };
+}
+```
+
+The `CustomFormat` interface supports:
+- **`parse`**: Convert text content to typed data
+- **`stringify`**: Convert typed data back to text content  
+- **`preserveFormat`** (optional): Preserve existing file structure and comments when updating
 
 
 For more detailed usage and examples, please refer to the [API documentation](https://jsr.io/@ryoppippi/limo/doc).

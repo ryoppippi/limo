@@ -305,7 +305,6 @@ test("createLimoCustom - Key-value format with validator", async () => {
   assertEquals(data, "name=myapp\nversion=2");
 });
 
-
 test("createLimoCustom - With prepared file", async () => {
   await using fixture = await createFixture({
     "data.csv": "red,green,blue",
