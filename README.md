@@ -70,6 +70,51 @@ function validator(_data: unknown): _data is Data {
 }
 ```
 
+### Graceful Validator Failures
+
+By default, if a validator function fails, `Limo` will throw an error. However, you can configure it to return `undefined` instead by setting `allowValidatorFailure` to `true`:
+
+```ts
+import { createLimoJson } from "@ryoppippi/limo";
+
+interface Config {
+  version: string;
+  features: string[];
+}
+
+function validator(data: unknown): data is Config {
+  const config = data as Config;
+  return typeof config === "object" && config != null &&
+    typeof config.version === "string" && Array.isArray(config.features);
+}
+
+// Graceful failure: returns undefined if validation fails
+{
+  using json = createLimoJson("config.json", { 
+    validator, 
+    allowValidatorFailure: true 
+  });
+  
+  if (json.data === undefined) {
+    // Handle invalid data gracefully
+    console.log("Config file is invalid, using defaults");
+    json.data = { version: "1.0.0", features: [] };
+  } else {
+    // Work with valid data
+    console.log(`Current version: ${json.data.version}`);
+  }
+}
+
+// Strict mode: throws error if validation fails (default behavior)
+{
+  using json = createLimoJson("config.json", { 
+    validator,
+    allowValidatorFailure: false  // or omit this option
+  });
+  // Will throw an error if validation fails
+}
+```
+
 `Limo` supports other file formats as well. Use the corresponding factory functions:
 
 - **Text files**: `createLimoText("file.txt")`

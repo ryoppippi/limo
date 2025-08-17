@@ -12,8 +12,11 @@ interface Limo<T> {
 }
 
 interface Options<T> {
+  /** Optional validator function to validate the parsed data */
   validator?: Validator<T>;
+  /** Whether to allow non-existent files (default: true) */
   allowNoExist?: boolean;
+  /** Whether to return undefined instead of throwing when validator fails (default: false) */
   allowValidatorFailure?: boolean;
 }
 
@@ -138,6 +141,25 @@ class LimoFile<T> implements Limo<T> {
  *   text.data = "Hello, World!";
  * }
  * ```
+ *
+ * @example
+ * ```ts
+ * // With validator and graceful failure handling
+ * import { createLimoText } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is string {
+ *   return typeof data === "string" && data.length > 0;
+ * }
+ * {
+ *   using text = createLimoText("file.txt", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (text.data === undefined) {
+ *     console.log("File content is invalid");
+ *     text.data = "Default content";
+ *   }
+ * }
+ * ```
  */
 export function createLimoText(
   path: string,
@@ -194,6 +216,25 @@ export function createLimoText(
  * {
  *   using json = createLimoJson("file.json", { validator });
  *   json.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator and graceful failure handling
+ * import { createLimoJson } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { version: string } {
+ *   return typeof data === "object" && data != null && "version" in data;
+ * }
+ * {
+ *   using json = createLimoJson("config.json", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (json.data === undefined) {
+ *     console.log("Invalid config, using defaults");
+ *     json.data = { version: "1.0.0" };
+ *   }
  * }
  * ```
  */
@@ -253,6 +294,25 @@ export function createLimoJson<T>(
  * {
  *   using jsonc = createLimoJsonc("file.jsonc", { validator });
  *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator and graceful failure handling
+ * import { createLimoJsonc } from "@ryoppippi/limo";
+ * function validator(data: unknown): data is { config: any } {
+ *   return typeof data === "object" && data != null && "config" in data;
+ * }
+ * {
+ *   using jsonc = createLimoJsonc("settings.jsonc", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (jsonc.data === undefined) {
+ *     // Handle invalid JSONC gracefully
+ *     jsonc.data = { config: {} };
+ *   }
  * }
  * ```
  */
