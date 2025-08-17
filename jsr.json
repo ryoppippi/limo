@@ -1,0 +1,10 @@
+{
+	"name": "@ryoppippi/limo",
+	"version": "0.0.0",
+	"exports": {
+		".": "./mod.ts"
+	},
+	"publish": {
+		"include": ["mod.ts", "README.md", "LICENSE"]
+	}
+}

@@ -1,32 +1,29 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import * as toml from "@iarna/toml";
+import * as yaml from "js-yaml";
 import * as jsonc_parser from "jsonc-parser";
-import * as std_toml from "@std/toml";
-import * as std_yaml from "@std/yaml";
 
 type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
-  [Symbol.dispose](): void;
+	[Symbol.dispose](): void;
 
-  get data(): T | undefined;
-  set data(value: T);
+	get data(): T | undefined;
+	set data(value: T);
 }
 
 interface Options<T> {
-  validator?: Validator<T>;
-  allowNoExist?: boolean;
+	validator?: Validator<T>;
+	allowNoExist?: boolean;
 }
 
-type ResolvedOptions<T> =
-  & Required<Omit<Options<T>, "validator">>
-  & Pick<Options<T>, "validator">;
+type ResolvedOptions<T> = Required<Omit<Options<T>, "validator">> &
+	Pick<Options<T>, "validator">;
 
-function resolveOptions<T>(
-  options: Options<T>,
-): ResolvedOptions<T> {
-  return {
-    validator: options.validator,
-    allowNoExist: options.allowNoExist ?? true,
-  };
+function resolveOptions<T>(options: Options<T>): ResolvedOptions<T> {
+	return {
+		validator: options.validator,
+		allowNoExist: options.allowNoExist ?? true,
+	};
 }
 
 /**
@@ -43,50 +40,50 @@ function resolveOptions<T>(
  * ```
  */
 export class Text implements Limo<string> {
-  #data: string | undefined;
-  #path: string;
-  #options: ResolvedOptions<string>;
+	#data: string | undefined;
+	#path: string;
+	#options: ResolvedOptions<string>;
 
-  constructor(path: string, options: Options<string> = {}) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
+	constructor(path: string, options: Options<string> = {}) {
+		this.#options = resolveOptions(options);
+		this.#path = path;
+		this.#data = this._read();
+	}
 
-  [Symbol.dispose]() {
-    this._write();
-  }
+	[Symbol.dispose]() {
+		this._write();
+	}
 
-  get data(): string | undefined {
-    return this.#data;
-  }
+	get data(): string | undefined {
+		return this.#data;
+	}
 
-  set data(value: string) {
-    this.#data = value;
-  }
+	set data(value: string) {
+		this.#data = value;
+	}
 
-  private _read() {
-    if (existsSync(this.#path)) {
-      const data = readFileSync(this.#path, { encoding: "utf8" });
-      const { validator } = this.#options;
-      if (validator != null && !validator(data)) {
-        throw new Error(`Invalid data: ${data}`);
-      }
-      return data;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
+	private _read() {
+		if (existsSync(this.#path)) {
+			const data = readFileSync(this.#path, { encoding: "utf8" });
+			const { validator } = this.#options;
+			if (validator != null && !validator(data)) {
+				throw new Error(`Invalid data: ${data}`);
+			}
+			return data;
+		}
+		if (!this.#options.allowNoExist) {
+			throw new Error(`File not found: ${this.#path}`);
+		}
+		return undefined;
+	}
 
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
+	private _write() {
+		if (this.#data == null) {
+			return;
+		}
 
-    writeFileSync(this.#path, this.#data);
-  }
+		writeFileSync(this.#path, this.#data);
+	}
 }
 
 /**
@@ -117,54 +114,51 @@ export class Text implements Limo<string> {
  */
 
 export class Json<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
+	#data: T | undefined;
+	#path: string;
+	#options: ResolvedOptions<T>;
 
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
+	constructor(path: string, options: Options<T> = {}) {
+		this.#options = resolveOptions(options);
+		this.#path = path;
+		this.#data = this._read();
+	}
 
-  [Symbol.dispose]() {
-    this._write();
-  }
+	[Symbol.dispose]() {
+		this._write();
+	}
 
-  get data(): T | undefined {
-    return this.#data;
-  }
+	get data(): T | undefined {
+		return this.#data;
+	}
 
-  set data(value: T) {
-    this.#data = value;
-  }
+	set data(value: T) {
+		this.#data = value;
+	}
 
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const json = JSON.parse(text) as unknown;
-      const { validator } = this.#options;
-      if (validator != null && !validator(json)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return json as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
+	private _read() {
+		if (existsSync(this.#path)) {
+			const text = readFileSync(this.#path, { encoding: "utf8" });
+			const json = JSON.parse(text) as unknown;
+			const { validator } = this.#options;
+			if (validator != null && !validator(json)) {
+				throw new Error(`Invalid data: ${text}`);
+			}
+			return json as T;
+		}
+		if (!this.#options.allowNoExist) {
+			throw new Error(`File not found: ${this.#path}`);
+		}
+		return undefined;
+	}
 
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
+	private _write() {
+		if (this.#data == null) {
+			return;
+		}
 
-    writeFileSync(this.#path, JSON.stringify(this.#data, null, 2));
-  }
+		writeFileSync(this.#path, JSON.stringify(this.#data, null, 2));
+	}
 }
 
 /**
@@ -197,81 +191,78 @@ export class Json<T> implements Limo<T> {
  * ```
  */
 export class Jsonc<T> implements Limo<T> {
-  #data: T | undefined;
-  #old_data: T | undefined;
-  #path: string;
-  #text: string | undefined;
-  #options: ResolvedOptions<T>;
+	#data: T | undefined;
+	#old_data: T | undefined;
+	#path: string;
+	#text: string | undefined;
+	#options: ResolvedOptions<T>;
 
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    const { jsonc, text } = this._read();
-    this.#data = this.#old_data = jsonc;
-    this.#text = text;
-  }
+	constructor(path: string, options: Options<T> = {}) {
+		this.#options = resolveOptions(options);
+		this.#path = path;
+		const { jsonc, text } = this._read();
+		this.#data = this.#old_data = jsonc;
+		this.#text = text;
+	}
 
-  [Symbol.dispose]() {
-    this._write();
-  }
+	[Symbol.dispose]() {
+		this._write();
+	}
 
-  get data(): T | undefined {
-    return this.#data;
-  }
+	get data(): T | undefined {
+		return this.#data;
+	}
 
-  set data(value: T) {
-    this.#data = value;
-  }
+	set data(value: T) {
+		this.#data = value;
+	}
 
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const jsonc = jsonc_parser.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(jsonc)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return { jsonc: jsonc as T, text };
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return { jsonc: undefined, text: undefined };
-  }
+	private _read() {
+		if (existsSync(this.#path)) {
+			const text = readFileSync(this.#path, { encoding: "utf8" });
+			const jsonc = jsonc_parser.parse(text);
+			const { validator } = this.#options;
+			if (validator != null && !validator(jsonc)) {
+				throw new Error(`Invalid data: ${text}`);
+			}
+			return { jsonc: jsonc as T, text };
+		}
+		if (!this.#options.allowNoExist) {
+			throw new Error(`File not found: ${this.#path}`);
+		}
+		return { jsonc: undefined, text: undefined };
+	}
 
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
+	private _write() {
+		if (this.#data == null) {
+			return;
+		}
 
-    const text = this.#text ?? "";
+		const text = this.#text ?? "";
 
-    const edits: jsonc_parser.EditResult[] = [];
+		const edits: jsonc_parser.EditResult[] = [];
 
-    for (const key of Object.keys(this.#old_data ?? {})) {
-      if (Object.hasOwn(this.#data, key)) {
-        continue;
-      }
-      const edit = jsonc_parser.modify(text, [key], undefined, {});
-      edits.push(edit);
-    }
+		for (const key of Object.keys(this.#old_data ?? {})) {
+			if (Object.hasOwn(this.#data, key)) {
+				continue;
+			}
+			const edit = jsonc_parser.modify(text, [key], undefined, {});
+			edits.push(edit);
+		}
 
-    for (const [key, value] of Object.entries(this.#data)) {
-      const edit = jsonc_parser.modify(text, [key], value, {});
-      edits.push(edit);
-    }
+		for (const [key, value] of Object.entries(this.#data)) {
+			const edit = jsonc_parser.modify(text, [key], value, {});
+			edits.push(edit);
+		}
 
-    const newText = jsonc_parser.applyEdits(text, edits.flat());
+		const newText = jsonc_parser.applyEdits(text, edits.flat());
 
-    const formatted = jsonc_parser.applyEdits(
-      newText,
-      jsonc_parser.format(newText, undefined, {}),
-    );
-    writeFileSync(this.#path, formatted);
-  }
+		const formatted = jsonc_parser.applyEdits(
+			newText,
+			jsonc_parser.format(newText, undefined, {}),
+		);
+		writeFileSync(this.#path, formatted);
+	}
 }
 
 /**
@@ -301,54 +292,51 @@ export class Jsonc<T> implements Limo<T> {
  * ```
  */
 export class Toml<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
+	#data: T | undefined;
+	#path: string;
+	#options: ResolvedOptions<T>;
 
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
+	constructor(path: string, options: Options<T> = {}) {
+		this.#options = resolveOptions(options);
+		this.#path = path;
+		this.#data = this._read();
+	}
 
-  [Symbol.dispose]() {
-    this._write();
-  }
+	[Symbol.dispose]() {
+		this._write();
+	}
 
-  get data(): T | undefined {
-    return this.#data;
-  }
+	get data(): T | undefined {
+		return this.#data;
+	}
 
-  set data(value: T) {
-    this.#data = value;
-  }
+	set data(value: T) {
+		this.#data = value;
+	}
 
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const toml = std_toml.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(toml)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return toml as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
+	private _read() {
+		if (existsSync(this.#path)) {
+			const text = readFileSync(this.#path, { encoding: "utf8" });
+			const tomlData = toml.parse(text);
+			const { validator } = this.#options;
+			if (validator != null && !validator(tomlData)) {
+				throw new Error(`Invalid data: ${text}`);
+			}
+			return tomlData as T;
+		}
+		if (!this.#options.allowNoExist) {
+			throw new Error(`File not found: ${this.#path}`);
+		}
+		return undefined;
+	}
 
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
+	private _write() {
+		if (this.#data == null) {
+			return;
+		}
 
-    writeFileSync(this.#path, std_toml.stringify(this.#data));
-  }
+		writeFileSync(this.#path, toml.stringify(this.#data));
+	}
 }
 
 /**
@@ -378,52 +366,49 @@ export class Toml<T> implements Limo<T> {
  * ```
  */
 export class Yaml<T> implements Limo<T> {
-  #data: T | undefined;
-  #path: string;
-  #options: ResolvedOptions<T>;
+	#data: T | undefined;
+	#path: string;
+	#options: ResolvedOptions<T>;
 
-  constructor(
-    path: string,
-    options: Options<T> = {},
-  ) {
-    this.#options = resolveOptions(options);
-    this.#path = path;
-    this.#data = this._read();
-  }
+	constructor(path: string, options: Options<T> = {}) {
+		this.#options = resolveOptions(options);
+		this.#path = path;
+		this.#data = this._read();
+	}
 
-  [Symbol.dispose]() {
-    this._write();
-  }
+	[Symbol.dispose]() {
+		this._write();
+	}
 
-  get data(): T | undefined {
-    return this.#data;
-  }
+	get data(): T | undefined {
+		return this.#data;
+	}
 
-  set data(value: T) {
-    this.#data = value;
-  }
+	set data(value: T) {
+		this.#data = value;
+	}
 
-  private _read() {
-    if (existsSync(this.#path)) {
-      const text = readFileSync(this.#path, { encoding: "utf8" });
-      const yaml = std_yaml.parse(text);
-      const { validator } = this.#options;
-      if (validator != null && !validator(yaml)) {
-        throw new Error(`Invalid data: ${text}`);
-      }
-      return yaml as T;
-    }
-    if (!this.#options.allowNoExist) {
-      throw new Error(`File not found: ${this.#path}`);
-    }
-    return undefined;
-  }
+	private _read() {
+		if (existsSync(this.#path)) {
+			const text = readFileSync(this.#path, { encoding: "utf8" });
+			const yamlData = yaml.load(text);
+			const { validator } = this.#options;
+			if (validator != null && !validator(yamlData)) {
+				throw new Error(`Invalid data: ${text}`);
+			}
+			return yamlData as T;
+		}
+		if (!this.#options.allowNoExist) {
+			throw new Error(`File not found: ${this.#path}`);
+		}
+		return undefined;
+	}
 
-  private _write() {
-    if (this.#data == null) {
-      return;
-    }
+	private _write() {
+		if (this.#data == null) {
+			return;
+		}
 
-    writeFileSync(this.#path, std_yaml.stringify(this.#data));
-  }
+		writeFileSync(this.#path, yaml.dump(this.#data));
+	}
 }

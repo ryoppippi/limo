@@ -1,0 +1,82 @@
+{
+	"name": "@ryoppippi/limo",
+	"version": "0.0.0",
+	"description": "Limo is a tiny library for reading and automatically writing files. It supports various file formats such as JSON, JSONC (JSON with comments), TOML, and YAML.",
+	"type": "module",
+	"main": "./mod.ts",
+	"exports": {
+		".": "./mod.ts"
+	},
+	"files": ["mod.ts", "README.md", "LICENSE"],
+	"scripts": {
+		"dev": "bun run --watch mod.ts",
+		"build": "bun build mod.ts --outdir=dist --format=esm",
+		"check": "bun run typecheck && bun run format:check",
+		"typecheck": "tsc --noEmit",
+		"format": "bunx @biomejs/biome format --write .",
+		"format:check": "bunx @biomejs/biome format .",
+		"lint": "bunx @biomejs/biome check .",
+		"lint:fix": "bunx @biomejs/biome check --write .",
+		"test": "bun test --coverage",
+		"test:coverage": "bun test --coverage",
+		"coverage:show": "echo 'Coverage report generated in coverage/'",
+		"jsr:publish": "bunx pkg-to-jsr",
+		"prepare": "simple-git-hooks"
+	},
+	"dependencies": {
+		"jsonc-parser": "^3.2.1",
+		"js-yaml": "^4.1.0",
+		"@iarna/toml": "^2.2.5"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@types/bun": "^1.1.14",
+		"@types/js-yaml": "^4.0.9",
+		"@types/node": "^22.10.2",
+		"pkg-to-jsr": "^1.4.0",
+		"simple-git-hooks": "^2.12.1",
+		"typescript": "^5.7.2"
+	},
+	"jsr": {
+		"dependencies": {
+			"@std/assert": "^1.0.0",
+			"@std/jsonc": "^1.0.0",
+			"@std/toml": "^1.0.0",
+			"@std/yaml": "^1.0.0",
+			"@cross/test": "^0.0.10"
+		}
+	},
+	"keywords": [
+		"file",
+		"read",
+		"write",
+		"json",
+		"jsonc",
+		"toml",
+		"yaml",
+		"automatic",
+		"disposable",
+		"typescript"
+	],
+	"author": "ryoppippi",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ryoppippi/limo.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ryoppippi/limo/issues"
+	},
+	"homepage": "https://github.com/ryoppippi/limo#readme",
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "bun run format && bun run lint && bun run typecheck",
+		"pre-push": "bun run test"
+	}
+}

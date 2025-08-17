@@ -18,14 +18,23 @@ It supports various file formats such as JSON, JSONC (JSON with comments), TOML,
 
 ## Installation
 
-To use `Limo` in your project, install from `jsr`
+To use `Limo` in your project, install from `npm` or `jsr`:
 
+### From npm
 ```sh
-deno add @ryoppippi/limo
+npm install @ryoppippi/limo
+bun add @ryoppippi/limo
+pnpm add @ryoppippi/limo
+yarn add @ryoppippi/limo
+```
+
+### From JSR
+```sh
 npx jsr add @ryoppippi/limo
 bunx jsr add @ryoppippi/limo
 pnpm dlx jsr add @ryoppippi/limo
 yarn dlx jsr add @ryoppippi/limo
+deno add @ryoppippi/limo
 ```
 
 ## Usage
