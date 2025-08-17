@@ -1,11 +1,11 @@
 import { test } from "@cross/test";
 import { assertEquals } from "@std/assert";
 
-import { tmpdir } from "node:os";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_yaml from "@std/yaml";
+import { createFixture } from "fs-fixture";
 
 import {
   createLimoJson,
@@ -15,16 +15,9 @@ import {
   createLimoYaml,
 } from "./mod.ts";
 
-function prepareTmpdir() {
-  const randomStr = Math.random().toString(36).substring(7);
-  const td = join(tmpdir(), randomStr);
-  mkdirSync(td, { recursive: true });
-  return td;
-}
-
-test("createLimoText", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.txt");
+test("createLimoText", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.txt");
   {
     using text = createLimoText(filepath);
     text.data = "Hello, World!";
@@ -34,9 +27,9 @@ test("createLimoText", () => {
   assertEquals(data, "Hello, World!");
 });
 
-test("createLimoJson without validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.json");
+test("createLimoJson without validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.json");
   {
     using json = createLimoJson(filepath);
     json.data = { hello: "world" };
@@ -47,9 +40,9 @@ test("createLimoJson without validator", () => {
   assertEquals(json, { hello: "world" });
 });
 
-test("createLimoJson with validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.json");
+test("createLimoJson with validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.json");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -64,9 +57,9 @@ test("createLimoJson with validator", () => {
   assertEquals(json, { hello: "world" });
 });
 
-test("createLimoJsonc without validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.jsonc");
+test("createLimoJsonc without validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.jsonc");
   {
     using json = createLimoJsonc(filepath);
     json.data = { hello: "world" };
@@ -77,12 +70,11 @@ test("createLimoJsonc without validator", () => {
   assertEquals(jsonc, { hello: "world" });
 });
 
-test("createLimoJsonc with prepared file and format preservation", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.jsonc");
-  const dummyJsonc = '{"hello": "world"} // comment';
-
-  writeFileSync(filepath, dummyJsonc);
+test("createLimoJsonc with prepared file and format preservation", async () => {
+  await using fixture = await createFixture({
+    "file.jsonc": '{"hello": "world"} // comment'
+  });
+  const filepath = join(fixture.path, "file.jsonc");
 
   function validator(data: unknown): data is { hello?: string; foo?: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -99,9 +91,9 @@ test("createLimoJsonc with prepared file and format preservation", () => {
   assertEquals(jsonc, { foo: "bar" });
 });
 
-test("createLimoToml", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.toml");
+test("createLimoToml", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.toml");
   {
     using toml = createLimoToml(filepath);
     toml.data = { hello: "world" };
@@ -111,9 +103,9 @@ test("createLimoToml", () => {
   assertEquals(data, 'hello = "world"\n');
 });
 
-test("createLimoToml with validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.toml");
+test("createLimoToml with validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.toml");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -127,9 +119,9 @@ test("createLimoToml with validator", () => {
   assertEquals(data, 'hello = "world"\n');
 });
 
-test("createLimoYaml", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.yaml");
+test("createLimoYaml", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.yaml");
   {
     using yaml = createLimoYaml(filepath);
     yaml.data = { hello: "world" };
@@ -139,9 +131,9 @@ test("createLimoYaml", () => {
   assertEquals(data, "hello: world\n");
 });
 
-test("createLimoYaml with validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.yaml");
+test("createLimoYaml with validator", async () => {
+  await using fixture = await createFixture({});
+  const filepath = join(fixture.path, "file.yaml");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -155,17 +147,16 @@ test("createLimoYaml with validator", () => {
   assertEquals(data, "hello: world\n");
 });
 
-test("createLimoYaml with prepared file and without validator", () => {
-  const td = prepareTmpdir();
-  const filepath = join(td, "file.yaml");
-  const dummyYaml = `
+test("createLimoYaml with prepared file and without validator", async () => {
+  await using fixture = await createFixture({
+    "file.yaml": `
 foo: bar
 baz:
   - qux
   - quux
-`;
-
-  writeFileSync(filepath, dummyYaml);
+`
+  });
+  const filepath = join(fixture.path, "file.yaml");
 
   {
     using yaml = createLimoYaml<{ foo: string; baz: string[] }>(filepath);
