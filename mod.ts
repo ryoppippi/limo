@@ -136,7 +136,7 @@ class LimoFile<T> implements Limo<T> {
  * ```ts
  * import { createLimoText } from "@ryoppippi/limo";
  * {
- *   using text = createLimoText(".tmp/file.txt");
+ *   using text = createLimoText("/tmp/file.txt");
  *   text.data = "Hello, World!";
  * }
  * ```
@@ -152,10 +152,10 @@ class LimoFile<T> implements Limo<T> {
  * }
  *
  * // Create a file with invalid content
- * writeFileSync(".tmp/content.txt", ""); // Empty file that will fail validation
+ * writeFileSync("/tmp/content.txt", ""); // Empty file that will fail validation
  *
  * {
- *   using text = createLimoText(".tmp/content.txt", {
+ *   using text = createLimoText("/tmp/content.txt", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -206,7 +206,7 @@ export function createLimoText(
  * ```ts
  * import { createLimoJson } from "@ryoppippi/limo";
  * {
- *   using json = createLimoJson(".tmp/file.json");
+ *   using json = createLimoJson("/tmp/file.json");
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -219,7 +219,7 @@ export function createLimoText(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using json = createLimoJson(".tmp/file.json", { validator });
+ *   using json = createLimoJson("/tmp/file.json", { validator });
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -235,10 +235,10 @@ export function createLimoText(
  * }
  *
  * // Create a file with invalid content
- * writeFileSync(".tmp/config.json", '{"invalid": "data"}');
+ * writeFileSync("/tmp/config.json", '{"invalid": "data"}');
  *
  * {
- *   using json = createLimoJson(".tmp/config.json", {
+ *   using json = createLimoJson("/tmp/config.json", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -290,7 +290,7 @@ export function createLimoJson<T>(
  * ```ts
  * import { createLimoJsonc } from "@ryoppippi/limo";
  * {
- *   using jsonc = createLimoJsonc(".tmp/file.jsonc");
+ *   using jsonc = createLimoJsonc("/tmp/file.jsonc");
  *   jsonc.data = { hello: "world" };
  * }
  * ```
@@ -303,7 +303,7 @@ export function createLimoJson<T>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using jsonc = createLimoJsonc(".tmp/file.jsonc", { validator });
+ *   using jsonc = createLimoJsonc("/tmp/file.jsonc", { validator });
  *   jsonc.data = { hello: "world" };
  * }
  * ```
@@ -319,10 +319,10 @@ export function createLimoJson<T>(
  * }
  *
  * // Create a file with invalid content
- * writeFileSync(".tmp/settings.jsonc", '{"invalid": "data"} // comment');
+ * writeFileSync("/tmp/settings.jsonc", '{"invalid": "data"} // comment');
  *
  * {
- *   using jsonc = createLimoJsonc(".tmp/settings.jsonc", {
+ *   using jsonc = createLimoJsonc("/tmp/settings.jsonc", {
  *     validator,
  *     allowValidatorFailure: true
  *   });
@@ -396,7 +396,7 @@ export function createLimoJsonc<T extends Record<string, unknown>>(
  * ```ts
  * import { createLimoToml } from "@ryoppippi/limo";
  * {
- *   using toml = createLimoToml(".tmp/file.toml");
+ *   using toml = createLimoToml("/tmp/file.toml");
  *   toml.data = { hello: "world" };
  * }
  * ```
@@ -409,7 +409,7 @@ export function createLimoJsonc<T extends Record<string, unknown>>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using toml = createLimoToml(".tmp/file.toml", { validator });
+ *   using toml = createLimoToml("/tmp/file.toml", { validator });
  *   toml.data = { hello: "world" };
  * }
  * ```
@@ -454,7 +454,7 @@ export function createLimoToml<T extends Record<string, unknown>>(
  * ```ts
  * import { createLimoYaml } from "@ryoppippi/limo";
  * {
- *   using yaml = createLimoYaml(".tmp/file.yaml");
+ *   using yaml = createLimoYaml("/tmp/file.yaml");
  *   yaml.data = { hello: "world" };
  * }
  * ```
@@ -467,7 +467,7 @@ export function createLimoToml<T extends Record<string, unknown>>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using yaml = createLimoYaml(".tmp/file.yaml", { validator });
+ *   using yaml = createLimoYaml("/tmp/file.yaml", { validator });
  *   yaml.data = { hello: "world" };
  * }
  * ```

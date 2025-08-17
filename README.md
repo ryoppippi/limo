@@ -37,7 +37,7 @@ import { createLimoJson } from "@ryoppippi/limo";
 
 // Read and write a JSON file
 {
-  using json = createLimoJson(".tmp/config.json");
+  using json = createLimoJson("/tmp/config.json");
   json.data = { hello: "world" };
 }
 
@@ -65,7 +65,7 @@ function validator(_data: unknown): _data is Data {
 
 // Read and write a JSON file with validation
 {
-  using json = createLimoJson(".tmp/user.json", { validator });
+  using json = createLimoJson("/tmp/user.json", { validator });
   json.data = { name: "John", age: 30 };
 }
 ```
@@ -90,11 +90,11 @@ function validator(data: unknown): data is Config {
 }
 
 // Create a file with invalid content
-writeFileSync(".tmp/config.json", '{"invalid": "data"}');
+writeFileSync("/tmp/config.json", '{"invalid": "data"}');
 
 // Graceful failure: returns undefined if validation fails
 {
-  using json = createLimoJson(".tmp/config.json", { 
+  using json = createLimoJson("/tmp/config.json", { 
     validator, 
     allowValidatorFailure: true 
   });
@@ -111,7 +111,7 @@ writeFileSync(".tmp/config.json", '{"invalid": "data"}');
 
 // Strict mode: throws error if validation fails (default behavior)
 // {
-//   using json = createLimoJson(".tmp/config.json", { 
+//   using json = createLimoJson("/tmp/config.json", { 
 //     validator,
 //     allowValidatorFailure: false  // or omit this option
 //   });
