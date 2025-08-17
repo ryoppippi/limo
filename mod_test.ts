@@ -1,7 +1,7 @@
 import { test } from "@cross/test";
 import { assertEquals } from "@std/assert";
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_yaml from "@std/yaml";
