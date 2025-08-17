@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_toml from "@std/toml";
 import * as std_yaml from "@std/yaml";
+import type { SetRequired } from "type-fest";
 
 type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
@@ -12,13 +13,15 @@ interface Limo<T> {
 }
 
 interface Options<T> {
+  /** Optional validator function to validate the parsed data */
   validator?: Validator<T>;
+  /** Whether to allow non-existent files (default: true) */
   allowNoExist?: boolean;
+  /** Whether to return undefined instead of throwing when validator fails (default: false) */
+  allowValidatorFailure?: boolean;
 }
 
-type ResolvedOptions<T> =
-  & Required<Omit<Options<T>, "validator">>
-  & Pick<Options<T>, "validator">;
+type ResolvedOptions<T> = SetRequired<Options<T>, "allowNoExist">;
 
 function resolveOptions<T>(
   options: Options<T>,
@@ -26,6 +29,7 @@ function resolveOptions<T>(
   return {
     validator: options.validator,
     allowNoExist: options.allowNoExist ?? true,
+    allowValidatorFailure: options.allowValidatorFailure,
   };
 }
 
@@ -82,8 +86,11 @@ class LimoFile<T> implements Limo<T> {
       }
       try {
         const data = this.#parseOptions.parse(text);
-        const { validator } = this.#options;
+        const { validator, allowValidatorFailure } = this.#options;
         if (validator != null && !validator(data)) {
+          if (allowValidatorFailure) {
+            return { data: undefined, text };
+          }
           throw new Error(`Invalid data: ${text}`);
         }
         return { data: data as T, text };
@@ -129,15 +136,61 @@ class LimoFile<T> implements Limo<T> {
  * ```ts
  * import { createLimoText } from "@ryoppippi/limo";
  * {
- *   using text = createLimoText("file.txt");
+ *   using text = createLimoText(".tmp/file.txt");
  *   text.data = "Hello, World!";
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // With validator and graceful failure handling
+ * import { createLimoText } from "@ryoppippi/limo";
+ * import { writeFileSync } from "node:fs";
+ * 
+ * function validator(data: unknown): data is string {
+ *   return typeof data === "string" && data.length > 0;
+ * }
+ * 
+ * // Create a file with invalid content
+ * writeFileSync(".tmp/content.txt", ""); // Empty file that will fail validation
+ * 
+ * {
+ *   using text = createLimoText(".tmp/content.txt", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (text.data === undefined) {
+ *     console.log("File content is invalid");
+ *     text.data = "Default content";
+ *   }
  * }
  * ```
  */
 export function createLimoText(
   path: string,
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Omit<Options<string>, "validator">,
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Options<string> & {
+    validator: Validator<string>;
+    allowValidatorFailure: true;
+  },
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Options<string> & {
+    validator: Validator<string>;
+    allowValidatorFailure?: false;
+  },
+): Limo<string>;
+export function createLimoText(
+  path: string,
   options: Options<string> = {},
-): Limo<string> {
+): Limo<string> | Limo<string | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -153,7 +206,7 @@ export function createLimoText(
  * ```ts
  * import { createLimoJson } from "@ryoppippi/limo";
  * {
- *   using json = createLimoJson("file.json");
+ *   using json = createLimoJson(".tmp/file.json");
  *   json.data = { hello: "world" };
  * }
  * ```
@@ -166,15 +219,61 @@ export function createLimoText(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using json = createLimoJson("file.json", { validator });
+ *   using json = createLimoJson(".tmp/file.json", { validator });
  *   json.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator and graceful failure handling
+ * import { createLimoJson } from "@ryoppippi/limo";
+ * import { writeFileSync } from "node:fs";
+ * 
+ * function validator(data: unknown): data is { version: string } {
+ *   return typeof data === "object" && data != null && "version" in data;
+ * }
+ * 
+ * // Create a file with invalid content
+ * writeFileSync(".tmp/config.json", '{"invalid": "data"}');
+ * 
+ * {
+ *   using json = createLimoJson(".tmp/config.json", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (json.data === undefined) {
+ *     console.log("Invalid config, using defaults");
+ *     json.data = { version: "1.0.0" };
+ *   }
  * }
  * ```
  */
 export function createLimoJson<T>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoJson<T>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -191,7 +290,7 @@ export function createLimoJson<T>(
  * ```ts
  * import { createLimoJsonc } from "@ryoppippi/limo";
  * {
- *   using jsonc = createLimoJsonc("file.jsonc");
+ *   using jsonc = createLimoJsonc(".tmp/file.jsonc");
  *   jsonc.data = { hello: "world" };
  * }
  * ```
@@ -204,15 +303,61 @@ export function createLimoJson<T>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using jsonc = createLimoJsonc("file.jsonc", { validator });
+ *   using jsonc = createLimoJsonc(".tmp/file.jsonc", { validator });
  *   jsonc.data = { hello: "world" };
+ * }
+ * ```
+ *
+ * @example
+ * ```ts
+ * // with validator and graceful failure handling
+ * import { createLimoJsonc } from "@ryoppippi/limo";
+ * import { writeFileSync } from "node:fs";
+ * 
+ * function validator(data: unknown): data is { config: any } {
+ *   return typeof data === "object" && data != null && "config" in data;
+ * }
+ * 
+ * // Create a file with invalid content
+ * writeFileSync(".tmp/settings.jsonc", '{"invalid": "data"} // comment');
+ * 
+ * {
+ *   using jsonc = createLimoJsonc(".tmp/settings.jsonc", {
+ *     validator,
+ *     allowValidatorFailure: true
+ *   });
+ *   if (jsonc.data === undefined) {
+ *     // Handle invalid JSONC gracefully
+ *     jsonc.data = { config: {} };
+ *   }
  * }
  * ```
  */
 export function createLimoJsonc<T extends Record<string, unknown>>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -251,7 +396,7 @@ export function createLimoJsonc<T extends Record<string, unknown>>(
  * ```ts
  * import { createLimoToml } from "@ryoppippi/limo";
  * {
- *   using toml = createLimoToml("file.toml");
+ *   using toml = createLimoToml(".tmp/file.toml");
  *   toml.data = { hello: "world" };
  * }
  * ```
@@ -264,15 +409,36 @@ export function createLimoJsonc<T extends Record<string, unknown>>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using toml = createLimoToml("file.toml", { validator });
+ *   using toml = createLimoToml(".tmp/file.toml", { validator });
  *   toml.data = { hello: "world" };
  * }
  * ```
  */
 export function createLimoToml<T extends Record<string, unknown>>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -288,7 +454,7 @@ export function createLimoToml<T extends Record<string, unknown>>(
  * ```ts
  * import { createLimoYaml } from "@ryoppippi/limo";
  * {
- *   using yaml = createLimoYaml("file.yaml");
+ *   using yaml = createLimoYaml(".tmp/file.yaml");
  *   yaml.data = { hello: "world" };
  * }
  * ```
@@ -301,15 +467,36 @@ export function createLimoToml<T extends Record<string, unknown>>(
  *   return typeof data === "object" && data != null && "hello" in data;
  * }
  * {
- *   using yaml = createLimoYaml("file.yaml", { validator });
+ *   using yaml = createLimoYaml(".tmp/file.yaml", { validator });
  *   yaml.data = { hello: "world" };
  * }
  * ```
  */
 export function createLimoYaml<T>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoYaml<T>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {

@@ -37,7 +37,7 @@ import { createLimoJson } from "@ryoppippi/limo";
 
 // Read and write a JSON file
 {
-  using json = createLimoJson("config.json");
+  using json = createLimoJson(".tmp/config.json");
   json.data = { hello: "world" };
 }
 
@@ -65,9 +65,58 @@ function validator(_data: unknown): _data is Data {
 
 // Read and write a JSON file with validation
 {
-  using json = createLimoJson("user.json", { validator });
+  using json = createLimoJson(".tmp/user.json", { validator });
   json.data = { name: "John", age: 30 };
 }
+```
+
+### Graceful Validator Failures
+
+By default, if a validator function fails, `Limo` will throw an error. However, you can configure it to return `undefined` instead by setting `allowValidatorFailure` to `true`:
+
+```ts
+import { createLimoJson } from "@ryoppippi/limo";
+import { writeFileSync } from "node:fs";
+
+interface Config {
+  version: string;
+  features: string[];
+}
+
+function validator(data: unknown): data is Config {
+  const config = data as Config;
+  return typeof config === "object" && config != null &&
+    typeof config.version === "string" && Array.isArray(config.features);
+}
+
+// Create a file with invalid content
+writeFileSync(".tmp/config.json", '{"invalid": "data"}');
+
+// Graceful failure: returns undefined if validation fails
+{
+  using json = createLimoJson(".tmp/config.json", { 
+    validator, 
+    allowValidatorFailure: true 
+  });
+  
+  if (json.data === undefined) {
+    // Handle invalid data gracefully
+    console.log("Config file is invalid, using defaults");
+    json.data = { version: "1.0.0", features: [] };
+  } else {
+    // Work with valid data
+    console.log(`Current version: ${json.data.version}`);
+  }
+}
+
+// Strict mode: throws error if validation fails (default behavior)
+// {
+//   using json = createLimoJson(".tmp/config.json", { 
+//     validator,
+//     allowValidatorFailure: false  // or omit this option
+//   });
+//   // Will throw an error if validation fails
+// }
 ```
 
 `Limo` supports other file formats as well. Use the corresponding factory functions:
