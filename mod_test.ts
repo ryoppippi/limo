@@ -70,7 +70,7 @@ test("createLimoJsonc without validator", async () => {
 
 test("createLimoJsonc with prepared file and format preservation", async () => {
   await using fixture = await createFixture({
-    "file.jsonc": '{"hello": "world"} // comment'
+    "file.jsonc": '{"hello": "world"} // comment',
   });
   const filepath = fixture.getPath("file.jsonc");
 
@@ -152,7 +152,7 @@ foo: bar
 baz:
   - qux
   - quux
-`
+`,
   });
   const filepath = fixture.getPath("file.yaml");
 
