@@ -21,6 +21,7 @@
 		"test:coverage": "bun test --coverage",
 		"coverage:show": "echo 'Coverage report generated in coverage/'",
 		"jsr:publish": "bunx pkg-to-jsr",
+		"npm:publish": "bunx clean-pkg-json package.json && npm publish --access public --provenance",
 		"prepare": "simple-git-hooks"
 	},
 	"dependencies": {
@@ -33,6 +34,7 @@
 		"@types/bun": "^1.1.14",
 		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^22.10.2",
+		"clean-pkg-json": "^1.2.0",
 		"pkg-to-jsr": "^1.4.0",
 		"simple-git-hooks": "^2.12.1",
 		"typescript": "^5.7.2"
@@ -78,5 +80,9 @@
 	"simple-git-hooks": {
 		"pre-commit": "bun run format && bun run lint && bun run typecheck",
 		"pre-push": "bun run test"
-	}
+	},
+	"clean-pkg-json": [
+		"simple-git-hooks",
+		"jsr"
+	]
 }
