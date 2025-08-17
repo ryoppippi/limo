@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_toml from "@std/toml";
 import * as std_yaml from "@std/yaml";
+import type { SetRequired } from "type-fest";
 
 type Validator<T> = (value: unknown) => value is T;
 interface Limo<T> {
@@ -20,9 +21,7 @@ interface Options<T> {
   allowValidatorFailure?: boolean;
 }
 
-type ResolvedOptions<T> =
-  & Required<Omit<Options<T>, "validator" | "allowValidatorFailure">>
-  & Pick<Options<T>, "validator" | "allowValidatorFailure">;
+type ResolvedOptions<T> = SetRequired<Options<T>, "allowNoExist">;
 
 function resolveOptions<T>(
   options: Options<T>,

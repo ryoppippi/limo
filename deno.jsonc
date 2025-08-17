@@ -23,7 +23,8 @@
     "@std/toml": "jsr:@std/toml@^1.0.0",
     "@std/yaml": "jsr:@std/yaml@^1.0.0",
     "jsonc-parser": "npm:jsonc-parser@^3.2.1",
-    "fs-fixture": "npm:fs-fixture@^2.8.1"
+    "fs-fixture": "npm:fs-fixture@^2.8.1",
+    "type-fest": "npm:type-fest@^4.41.0"
   },
   "exports": "./mod.ts",
   "publish": {
