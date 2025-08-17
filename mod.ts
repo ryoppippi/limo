@@ -14,11 +14,12 @@ interface Limo<T> {
 interface Options<T> {
   validator?: Validator<T>;
   allowNoExist?: boolean;
+  allowValidatorFailure?: boolean;
 }
 
 type ResolvedOptions<T> =
-  & Required<Omit<Options<T>, "validator">>
-  & Pick<Options<T>, "validator">;
+  & Required<Omit<Options<T>, "validator" | "allowValidatorFailure">>
+  & Pick<Options<T>, "validator" | "allowValidatorFailure">;
 
 function resolveOptions<T>(
   options: Options<T>,
@@ -26,6 +27,7 @@ function resolveOptions<T>(
   return {
     validator: options.validator,
     allowNoExist: options.allowNoExist ?? true,
+    allowValidatorFailure: options.allowValidatorFailure,
   };
 }
 
@@ -82,8 +84,11 @@ class LimoFile<T> implements Limo<T> {
       }
       try {
         const data = this.#parseOptions.parse(text);
-        const { validator } = this.#options;
+        const { validator, allowValidatorFailure } = this.#options;
         if (validator != null && !validator(data)) {
+          if (allowValidatorFailure) {
+            return { data: undefined, text };
+          }
           throw new Error(`Invalid data: ${text}`);
         }
         return { data: data as T, text };
@@ -136,8 +141,29 @@ class LimoFile<T> implements Limo<T> {
  */
 export function createLimoText(
   path: string,
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Omit<Options<string>, "validator">,
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Options<string> & {
+    validator: Validator<string>;
+    allowValidatorFailure: true;
+  },
+): Limo<string | undefined>;
+export function createLimoText(
+  path: string,
+  options: Options<string> & {
+    validator: Validator<string>;
+    allowValidatorFailure?: false;
+  },
+): Limo<string>;
+export function createLimoText(
+  path: string,
   options: Options<string> = {},
-): Limo<string> {
+): Limo<string> | Limo<string | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -173,8 +199,29 @@ export function createLimoText(
  */
 export function createLimoJson<T>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoJson<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoJson<T>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -211,8 +258,29 @@ export function createLimoJson<T>(
  */
 export function createLimoJsonc<T extends Record<string, unknown>>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoJsonc<T extends Record<string, unknown>>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -271,8 +339,29 @@ export function createLimoJsonc<T extends Record<string, unknown>>(
  */
 export function createLimoToml<T extends Record<string, unknown>>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoToml<T extends Record<string, unknown>>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
@@ -308,8 +397,29 @@ export function createLimoToml<T extends Record<string, unknown>>(
  */
 export function createLimoYaml<T>(
   path: string,
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Omit<Options<T>, "validator">,
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure: true;
+  },
+): Limo<T | undefined>;
+export function createLimoYaml<T>(
+  path: string,
+  options: Options<T> & {
+    validator: Validator<T>;
+    allowValidatorFailure?: false;
+  },
+): Limo<T>;
+export function createLimoYaml<T>(
+  path: string,
   options: Options<T> = {},
-): Limo<T> {
+): Limo<T> | Limo<T | undefined> {
   return new LimoFile(path, {
     ...options,
     parseOptions: {
