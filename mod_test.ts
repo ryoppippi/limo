@@ -1,8 +1,6 @@
 import { test } from "@cross/test";
 import { assertEquals } from "@std/assert";
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import * as jsonc_parser from "jsonc-parser";
 import * as std_yaml from "@std/yaml";
 import { createFixture } from "fs-fixture";
@@ -17,32 +15,32 @@ import {
 
 test("createLimoText", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.txt");
+  const filepath = fixture.getPath("file.txt");
   {
     using text = createLimoText(filepath);
     text.data = "Hello, World!";
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.txt", "utf-8");
   assertEquals(data, "Hello, World!");
 });
 
 test("createLimoJson without validator", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.json");
+  const filepath = fixture.getPath("file.json");
   {
     using json = createLimoJson(filepath);
     json.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.json", "utf-8");
   const json = JSON.parse(data);
   assertEquals(json, { hello: "world" });
 });
 
 test("createLimoJson with validator", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.json");
+  const filepath = fixture.getPath("file.json");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -52,20 +50,20 @@ test("createLimoJson with validator", async () => {
     json.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.json", "utf-8");
   const json = JSON.parse(data);
   assertEquals(json, { hello: "world" });
 });
 
 test("createLimoJsonc without validator", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.jsonc");
+  const filepath = fixture.getPath("file.jsonc");
   {
     using json = createLimoJsonc(filepath);
     json.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.jsonc", "utf-8");
   const jsonc = jsonc_parser.parse(data);
   assertEquals(jsonc, { hello: "world" });
 });
@@ -74,7 +72,7 @@ test("createLimoJsonc with prepared file and format preservation", async () => {
   await using fixture = await createFixture({
     "file.jsonc": '{"hello": "world"} // comment'
   });
-  const filepath = join(fixture.path, "file.jsonc");
+  const filepath = fixture.getPath("file.jsonc");
 
   function validator(data: unknown): data is { hello?: string; foo?: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -86,26 +84,26 @@ test("createLimoJsonc with prepared file and format preservation", async () => {
     json.data = { foo: "bar" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.jsonc", "utf-8");
   const jsonc = jsonc_parser.parse(data);
   assertEquals(jsonc, { foo: "bar" });
 });
 
 test("createLimoToml", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.toml");
+  const filepath = fixture.getPath("file.toml");
   {
     using toml = createLimoToml(filepath);
     toml.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.toml", "utf-8");
   assertEquals(data, 'hello = "world"\n');
 });
 
 test("createLimoToml with validator", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.toml");
+  const filepath = fixture.getPath("file.toml");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -115,25 +113,25 @@ test("createLimoToml with validator", async () => {
     toml.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.toml", "utf-8");
   assertEquals(data, 'hello = "world"\n');
 });
 
 test("createLimoYaml", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.yaml");
+  const filepath = fixture.getPath("file.yaml");
   {
     using yaml = createLimoYaml(filepath);
     yaml.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.yaml", "utf-8");
   assertEquals(data, "hello: world\n");
 });
 
 test("createLimoYaml with validator", async () => {
   await using fixture = await createFixture({});
-  const filepath = join(fixture.path, "file.yaml");
+  const filepath = fixture.getPath("file.yaml");
 
   function validator(data: unknown): data is { hello: string } {
     return typeof data === "object" && data != null && "hello" in data;
@@ -143,7 +141,7 @@ test("createLimoYaml with validator", async () => {
     yaml.data = { hello: "world" };
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.yaml", "utf-8");
   assertEquals(data, "hello: world\n");
 });
 
@@ -156,7 +154,7 @@ baz:
   - quux
 `
   });
-  const filepath = join(fixture.path, "file.yaml");
+  const filepath = fixture.getPath("file.yaml");
 
   {
     using yaml = createLimoYaml<{ foo: string; baz: string[] }>(filepath);
@@ -164,7 +162,7 @@ baz:
     yaml.data?.baz.push("corge");
   }
 
-  const data = readFileSync(filepath, "utf-8");
+  const data = await fixture.readFile("file.yaml", "utf-8");
   const yamlData = std_yaml.parse(data);
   assertEquals(yamlData, { foo: "bar", baz: ["qux", "quux", "corge"] });
 });
