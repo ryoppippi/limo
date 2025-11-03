@@ -1,8 +1,8 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@cross/runtime@1": "1.1.0",
-    "jsr:@cross/test@^0.0.10": "0.0.10",
+    "jsr:@cross/runtime@1.0": "1.0.0",
+    "jsr:@cross/test@^0.0.14": "0.0.14",
     "jsr:@std/assert@1": "1.0.14",
     "jsr:@std/collections@^1.1.3": "1.1.3",
     "jsr:@std/fs@*": "1.0.19",
@@ -14,14 +14,14 @@
     "npm:@types/node@*": "18.16.19",
     "npm:cronstrue@*": "2.50.0",
     "npm:fs-fixture@^2.8.1": "2.8.1",
-    "npm:type-fest@^4.41.0": "4.41.0"
+    "npm:type-fest@5": "5.2.0"
   },
   "jsr": {
-    "@cross/runtime@1.1.0": {
-      "integrity": "f35a3b768a9de125277329483b684062ffc9ee86f4449cb8b3d614adcad64ffb"
+    "@cross/runtime@1.0.0": {
+      "integrity": "dddecdf99182df13d50279d1e473f715e83d41961c5c22edd7bb0c4c3cf8a76a"
     },
-    "@cross/test@0.0.10": {
-      "integrity": "5f235cdd927d5551d692bc413458625552d299bc5471baf18180e4287cf4ac20",
+    "@cross/test@0.0.14": {
+      "integrity": "3af2cf23e39f97156d21da4b21373407735343493e333f33eaeceedce511a7f9",
       "dependencies": [
         "jsr:@cross/runtime"
       ]
@@ -72,18 +72,24 @@
     "fs-fixture@2.8.1": {
       "integrity": "sha512-C0xA7XvqZBbbOgitWcMDstfih8GaOPEyXfvNefmV7+1573TCnFQ6hAJEUEzH2LVrscONLh73rvayNfa/m9PMgw=="
     },
-    "type-fest@4.41.0": {
-      "integrity": "sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA=="
+    "tagged-tag@1.0.0": {
+      "integrity": "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="
+    },
+    "type-fest@5.2.0": {
+      "integrity": "sha512-xxCJm+Bckc6kQBknN7i9fnP/xobQRsRQxR01CztFkp/h++yfVxUUcmMgfR2HttJx/dpWjS9ubVuyspJv24Q9DA==",
+      "dependencies": [
+        "tagged-tag"
+      ]
     }
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cross/test@^0.0.10",
+      "jsr:@cross/test@^0.0.14",
       "jsr:@std/assert@1",
       "jsr:@std/toml@1",
       "jsr:@std/yaml@1",
       "npm:fs-fixture@^2.8.1",
-      "npm:type-fest@^4.41.0"
+      "npm:type-fest@5"
     ]
   }
 }
