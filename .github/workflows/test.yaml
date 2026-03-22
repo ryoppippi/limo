@@ -29,7 +29,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
-          deno-version: 2.7.6
+          deno-version: 2.7.7
 
       - name: Check
         run: deno task check
@@ -46,7 +46,7 @@ jobs:
       - name: Setup Deno
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
-          deno-version: 2.7.6
+          deno-version: 2.7.7
 
       - name: Run test with coverage report
         shell: bash
