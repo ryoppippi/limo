@@ -22,7 +22,7 @@
     "@std/toml": "jsr:@std/toml@^1.0.11",
     "@std/yaml": "jsr:@std/yaml@^1.1.2",
     "fs-fixture": "npm:fs-fixture@^2.14.0",
-    "type-fest": "npm:type-fest@^5.7.0"
+    "type-fest": "npm:type-fest@^5.8.0"
   },
   "exports": "./mod.ts",
   "publish": {
